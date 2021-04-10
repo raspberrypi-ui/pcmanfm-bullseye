@@ -1,0 +1,3 @@
+# The directory /usr/lib/x86_64-linux-gnu/pcmanfm/ is required to install
+# modules and to avoid LibFM Warning about not accessible directory
+package-contains-empty-directory usr/lib/x86_64-linux-gnu/pcmanfm/
