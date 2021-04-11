@@ -45,6 +45,15 @@ static const char folder_menu_xml[]=
   "</placeholder>"
 "</popup>";
 
+static const char folder_menu_cutdown_xml[]=
+"<popup>"
+  "<placeholder name='ph1'>"
+    "<menuitem action='NewWin'/>"
+    "<menuitem action='Term'/>"
+    /* "<menuitem action='Search'/>" */
+  "</placeholder>"
+"</popup>";
+
 /* Additional action entries for popup menus - check mnemonics in FmFileMenu */
 static const GtkActionEntry folder_menu_actions[]=
 {

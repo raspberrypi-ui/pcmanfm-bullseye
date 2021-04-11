@@ -148,6 +148,8 @@ struct _FmAppConfig
 #if FM_CHECK_VERSION(1, 2, 0)
     char *home_path;
 #endif
+    char *prefs_app;
+    gboolean common_bg;
 
     /*char* su_cmd;*/
 

@@ -46,6 +46,15 @@ static const char folder_menu_xml[]=
   "</placeholder>"
 "</popup>";
 
+static const char folder_menu_cutdown_xml[]=
+"<popup>"
+  "<placeholder name='ph1'>"
+    "<menuitem action='NewWin'/>"
+    "<menuitem action='Term'/>"
+    /* "<menuitem action='Search'/>" */
+  "</placeholder>"
+"</popup>";
+
 static void on_open_in_new_tab(GtkAction* act, FmMainWin* win);
 static void on_open_in_new_win(GtkAction* act, FmMainWin* win);
 static void on_open_folder_in_terminal(GtkAction* act, FmMainWin* win);
@@ -484,7 +493,7 @@ static void  on_folder_view_columns_changed(FmFolderView *fv, FmTabPage *page)
     }
     g_slist_free(columns);
     cols[i] = NULL; /* terminate the list */
-    if (page->own_config)
+    if (page->own_config && !fm_config->cutdown_menus)
     {
         g_strfreev(page->columns);
         page->columns = cols;
@@ -836,7 +845,10 @@ static void update_files_popup(FmFolderView* fv, GtkWindow* win,
     gtk_action_group_set_translation_domain(act_grp, NULL);
     gtk_action_group_add_actions(act_grp, folder_menu_actions,
                                  G_N_ELEMENTS(folder_menu_actions), win);
+    if (!fm_config->cutdown_menus)
     gtk_ui_manager_add_ui_from_string(ui, folder_menu_xml, -1, NULL);
+    else
+    gtk_ui_manager_add_ui_from_string(ui, folder_menu_cutdown_xml, -1, NULL);
     if (!all_native)
         gtk_action_set_visible(gtk_action_group_get_action(act_grp, "Term"), FALSE);
 }
@@ -878,7 +890,10 @@ void _update_sidepane_popup(FmSidePane* sp, GtkUIManager* ui,
     gtk_action_group_add_actions(act_grp, folder_menu_actions,
                                  G_N_ELEMENTS(folder_menu_actions), win);
     /* we use the same XML for simplicity */
+    if (!fm_config->cutdown_menus)
     gtk_ui_manager_add_ui_from_string(ui, folder_menu_xml, -1, NULL);
+    else
+    gtk_ui_manager_add_ui_from_string(ui, folder_menu_cutdown_xml, -1, NULL);
     if (!pcmanfm_can_open_path_in_terminal(fm_file_info_get_path(file)))
         gtk_action_set_visible(gtk_action_group_get_action(act_grp, "Term"), FALSE);
 }
@@ -918,7 +933,13 @@ static void fm_tab_page_init(FmTabPage *page)
     FmSidePaneMode mode = app_config->side_pane_mode;
 
     page->side_pane = fm_side_pane_new();
+    if (!fm_config->cutdown_menus)
     fm_side_pane_set_mode(page->side_pane, (mode & FM_SP_MODE_MASK));
+    else
+    {
+        if (fm_config->cutdown_places) fm_side_pane_set_mode(page->side_pane, FM_SP_HYBRID);
+        else fm_side_pane_set_mode(page->side_pane, FM_SP_DIR_TREE);
+    }
 #if FM_CHECK_VERSION(1, 2, 0)
     fm_side_pane_set_popup_updater(page->side_pane, _update_sidepane_popup, page);
     if (app_config->home_path && app_config->home_path[0])
@@ -1163,6 +1184,15 @@ void fm_tab_page_set_show_hidden(FmTabPage* page, gboolean show_hidden)
     g_signal_emit(page, signals[STATUS], 0,
                   (guint)FM_STATUS_TEXT_NORMAL,
                   page->status_text[FM_STATUS_TEXT_NORMAL]);
+}
+
+void fm_tab_page_set_show_places (FmTabPage* page, gboolean show_places)
+{
+    fm_config->cutdown_places = show_places;
+    if (fm_config->cutdown_places)
+        fm_side_pane_set_mode (page->side_pane, FM_SP_HYBRID);
+    else
+        fm_side_pane_set_mode (page->side_pane, FM_SP_DIR_TREE);
 }
 
 FmPath* fm_tab_page_get_cwd(FmTabPage* page)

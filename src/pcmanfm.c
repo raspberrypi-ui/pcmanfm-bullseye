@@ -62,6 +62,7 @@ static gboolean one_screen = FALSE;
 /* static gboolean new_tab = FALSE; */
 static gint show_pref = -1;
 static gboolean desktop_pref = FALSE;
+static gboolean reconfigure = FALSE;
 static char* set_wallpaper = NULL;
 static char* wallpaper_mode = NULL;
 static gboolean new_win = FALSE;
@@ -84,6 +85,7 @@ static GOptionEntry opt_entries[] =
     { "desktop", '\0', 0, G_OPTION_ARG_NONE, &show_desktop, N_("Launch desktop manager"), NULL },
     { "desktop-off", '\0', 0, G_OPTION_ARG_NONE, &desktop_off, N_("Turn off desktop manager if it's running"), NULL },
     { "desktop-pref", '\0', 0, G_OPTION_ARG_NONE, &desktop_pref, N_("Open desktop preference dialog"), NULL },
+    { "reconfigure", '\0', 0, G_OPTION_ARG_NONE, &reconfigure, N_("Reload desktop config file"), NULL },
     { "one-screen", '\0', 0, G_OPTION_ARG_NONE, &one_screen, N_("Use --desktop option only for one screen"), NULL },
     { "set-wallpaper", 'w', 0, G_OPTION_ARG_FILENAME, &set_wallpaper, N_("Set desktop wallpaper from image FILE"), N_("FILE") },
                     /* don't translate list of modes in description, please */
@@ -341,8 +343,8 @@ gboolean pcmanfm_run(gint screen_num)
 
     if(!files_to_open)
     {
-        /* FIXME: use screen number from client and pointer position */
-        FmDesktop *desktop = fm_desktop_get(screen_num, 0);
+        /* Get the desktop on which the mouse pointer is currently displayed... */
+        FmDesktop *desktop = fm_desktop_get();
 
         /* Launch desktop manager */
         if(show_desktop)
@@ -368,6 +370,14 @@ gboolean pcmanfm_run(gint screen_num)
         {
             fm_edit_preference(GTK_WINDOW(desktop), show_pref - 1);
             return reset_options();
+        }
+        else if(reconfigure)
+        {
+            fm_config_load_from_file (fm_config, NULL);
+            fm_desktop_reconfigure (NULL);
+            fm_places_reload ();
+            reconfigure = FALSE;
+            return TRUE;
         }
         else if(desktop == NULL)
         {
@@ -573,7 +583,42 @@ gboolean pcmanfm_open_folder(GAppLaunchContext* ctx, GList* folder_infos, gpoint
     for(; l; l=l->next)
     {
         FmFileInfo* fi = (FmFileInfo*)l->data;
+        if (!fm_config->cutdown_menus)
         fm_main_win_open_in_last_active(fm_file_info_get_path(fi));
+        else
+        fm_main_win_add_win(NULL,fm_file_info_get_path(fi));
+    }
+    if(user_data && FM_IS_DESKTOP(user_data))
+        move_window_to_desktop(fm_main_win_get_last_active(), user_data);
+    return TRUE;
+}
+
+gboolean pcmanfm_search_results(GAppLaunchContext* ctx, GList* folder_infos, gpointer user_data, GError** err)
+{
+    GList* l = folder_infos;
+    gboolean use_new_win = new_win;
+
+    /* for desktop folder open it in new win if set in config */
+    if (!use_new_win && user_data && FM_IS_DESKTOP(user_data))
+        use_new_win = app_config->desktop_folder_new_win;
+    if(use_new_win)
+    {
+        FmMainWin *win = fm_main_win_add_win(NULL,
+                                fm_file_info_get_path((FmFileInfo*)l->data));
+        if(window_role)
+            gtk_window_set_role(GTK_WINDOW(win), window_role);
+        new_win = FALSE;
+        l = l->next;
+    }
+    for(; l; l=l->next)
+    {
+        FmFileInfo* fi = (FmFileInfo*)l->data;
+        FmMainWin* win = fm_main_win_get_last_active();
+        if(!win)
+            win = fm_main_win_add_win(NULL, fm_file_info_get_path(fi));
+        else
+            fm_main_win_chdir(win, fm_file_info_get_path(fi));
+        gtk_window_present(GTK_WINDOW(win));
     }
     if(user_data && FM_IS_DESKTOP(user_data))
         move_window_to_desktop(fm_main_win_get_last_active(), user_data);
@@ -694,4 +739,28 @@ char* pcmanfm_get_profile_dir(gboolean create)
     if(create)
         g_mkdir_with_parents(dir, 0700);
     return dir;
+}
+
+char* pcmanfm_get_system_profile_dir (void)
+{
+    const gchar * const *config_dirs = g_get_system_config_dirs ();
+    char* dir = g_build_filename (config_dirs[0], "pcmanfm", profile ? profile : "default", NULL);
+    return dir;
+}
+
+gchar *home_dir (void)
+{
+    char buf[256];
+    FILE *fp = popen ("eval echo ~$SUDO_USER", "r");
+    if (fp == NULL) return NULL;
+    if (fgets (buf, sizeof (buf) - 1, fp) == NULL)
+    {
+        pclose (fp);
+        return NULL;
+    }
+    pclose (fp);
+    if (strlen (buf) > 0) buf[strlen(buf) - 1] = 0;
+    else return NULL;
+    if (buf[0] != '/') return NULL;
+    return g_strdup (buf);
 }

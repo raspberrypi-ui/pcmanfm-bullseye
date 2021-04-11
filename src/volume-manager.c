@@ -81,7 +81,7 @@ static void _run_app(GAppInfo *app, GMount *mount)
     {
         FmPath* path = fm_path_new_for_gfile(gf);
 
-        if (app_config->media_in_new_tab)
+        if (app_config->media_in_new_tab && !fm_config->cutdown_menus)
             fm_main_win_open_in_last_active(path);
         else
             fm_main_win_add_win(NULL, path);

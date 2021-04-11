@@ -45,6 +45,7 @@
 
 static GtkWindow* pref_dlg = NULL;
 static GtkNotebook* notebook = NULL;
+static GtkWidget *places_box;
 /*
 static GtkWidget* icon_size_combo[3] = {0};
 static GtkWidget* bookmark_combo = NULL
@@ -672,8 +673,118 @@ static void on_whitelist_sel_changed(GtkTreeSelection *selection, GtkWidget *btn
 }
 #endif
 
+static void on_show_status (GtkToggleButton *act, FmMainWin *win)
+{
+    gboolean active = gtk_toggle_button_get_active (act);
+
+    if (app_config->show_statusbar != active)
+    {
+        app_config->show_statusbar = active;
+        fm_config_emit_changed(fm_config, "statusbar");
+        pcmanfm_save_config(FALSE);
+    }
+    gtk_widget_set_visible(GTK_WIDGET(win->statusbar), app_config->show_statusbar);
+}
+
+static void on_show_places (GtkToggleButton* act, FmMainWin* win)
+{
+    FmTabPage* page = win->current_page;
+    if (!page) return;
+    gboolean active = gtk_toggle_button_get_active (act);
+    fm_config->cutdown_places = active;
+    fm_tab_page_set_show_places (page, active);
+    gtk_widget_set_sensitive (places_box, fm_config->cutdown_places);
+    pcmanfm_save_config (FALSE);
+}
+
+static void on_show_side_pane(GtkToggleButton* act, FmMainWin* win)
+{
+    gboolean active;
+
+    active = gtk_toggle_button_get_active(act);
+    if(active)
+    {
+        app_config->side_pane_mode &= ~FM_SP_HIDE;
+        gtk_widget_show_all(GTK_WIDGET(win->side_pane));
+    }
+    else
+    {
+        app_config->side_pane_mode |= FM_SP_HIDE;
+        gtk_widget_hide(GTK_WIDGET(win->side_pane));
+    }
+    /* FIXME: propagate the event to other windows? */
+    pcmanfm_save_config(FALSE);
+}
+
+#if FM_CHECK_VERSION(1, 0, 2)
+static inline void update_sort_type_for_page(FmTabPage *page, FmFolderView *fv, FmSortMode mode)
+#else
+static inline void update_sort_type_for_page(FmTabPage *page, FmFolderView *fv, guint mode)
+#endif
+{
+    if(mode != page->sort_type)
+    {
+        page->sort_type = mode;
+        if (page->own_config)
+        {
+            fm_app_config_save_config_for_path(fm_folder_view_get_cwd(fv), mode,
+                                               page->sort_by, -1,
+                                               page->show_hidden, NULL);
+        }
+        else
+        {
+            app_config->sort_type = mode;
+            pcmanfm_save_config(FALSE);
+        }
+    }
+}
+
+
+
+static void on_mingle_dirs(GtkToggleButton* act, FmMainWin* win)
+{
+    FmFolderView *fv = win->folder_view;
+    FmFolderModel *model = fm_folder_view_get_model(fv);
+    FmSortMode mode;
+    gboolean active;
+
+    if (model)
+    {
+        fm_folder_model_get_sort(model, NULL, &mode);
+        active = gtk_toggle_button_get_active(act);
+        mode &= ~FM_SORT_NO_FOLDER_FIRST;
+        if (active)
+            mode |= FM_SORT_NO_FOLDER_FIRST;
+        fm_folder_model_set_sort(model, -1, mode);
+        update_sort_type_for_page(win->current_page, fv, mode);
+    }
+}
+
+static void on_sort_ignore_case(GtkToggleButton* act, FmMainWin* win)
+{
+    FmFolderView *fv = win->folder_view;
+    FmFolderModel *model = fm_folder_view_get_model(fv);
+    FmSortMode mode;
+    gboolean active;
+
+    if (model)
+    {
+        fm_folder_model_get_sort(model, NULL, &mode);
+        active = gtk_toggle_button_get_active(act);
+        mode &= ~FM_SORT_CASE_SENSITIVE;
+        if (!active)
+            mode |= FM_SORT_CASE_SENSITIVE;
+        fm_folder_model_set_sort(model, -1, mode);
+        update_sort_type_for_page(win->current_page, fv, mode);
+    }
+}
+
+
 void fm_edit_preference( GtkWindow* parent, int page )
 {
+    FmMainWin *win = fm_main_win_get_last_active ();
+    FmFolderView *fv = win->folder_view;
+
     if(!pref_dlg)
     {
         GtkBuilder* builder = gtk_builder_new();
@@ -716,7 +827,13 @@ void fm_edit_preference( GtkWindow* parent, int page )
         INIT_BOOL_SHOW(builder, FmConfig, quick_exec, NULL);
 #endif
 
+        if (!fm_config->cutdown_menus)
         INIT_COMBO(builder, FmAppConfig, bm_open_method, NULL);
+        else
+        {
+            gtk_widget_hide(GTK_WIDGET(gtk_builder_get_object(builder, "bm_open_method")));
+            gtk_widget_hide(GTK_WIDGET(gtk_builder_get_object(builder, "label2")));
+        }
 #if FM_CHECK_VERSION(1, 2, 0)
         init_drop_default_action_combo(builder);
         gtk_widget_show(GTK_WIDGET(gtk_builder_get_object(builder, "drop_default_action")));
@@ -724,7 +841,9 @@ void fm_edit_preference( GtkWindow* parent, int page )
         INIT_BOOL_SHOW(builder, FmConfig, smart_desktop_autodrop, NULL);
         INIT_BOOL_SHOW(builder, FmAppConfig, focus_previous, NULL);
 #endif
+        if (!fm_config->cutdown_menus)
         INIT_BOOL_SHOW(builder, FmAppConfig, change_tab_on_drop, NULL);
+        if (!fm_config->cutdown_menus)
         gtk_widget_show(GTK_WIDGET(gtk_builder_get_object(builder, "on_unmount_vbox")));
         if (app_config->close_on_unmount)
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder, "close_on_unmount")), TRUE);
@@ -733,6 +852,8 @@ void fm_edit_preference( GtkWindow* parent, int page )
         g_signal_connect(gtk_builder_get_object(builder, "close_on_unmount"),
                          "toggled", G_CALLBACK(on_close_on_unmount_toggled), app_config);
         INIT_COMBO(builder, FmAppConfig, view_mode, NULL);
+        if (fm_config->cutdown_menus)
+            gtk_widget_hide (GTK_WIDGET(gtk_builder_get_object(builder, "vbox3")));
         /* FIXME: translate FmStandardViewMode <-> GtkListStore index */
 
         /* 'Display' tab */
@@ -744,6 +865,8 @@ void fm_edit_preference( GtkWindow* parent, int page )
         INIT_BOOL(builder, FmConfig, show_thumbnail, NULL);
         INIT_BOOL(builder, FmConfig, thumbnail_local, NULL);
         INIT_SPIN(builder, FmConfig, thumbnail_max, NULL);
+        if (fm_config->cutdown_menus)
+            gtk_widget_hide (GTK_WIDGET(gtk_builder_get_object(builder, "show_thumbnail")));
 
         INIT_BOOL(builder, FmConfig, si_unit, NULL);
         INIT_BOOL(builder, FmConfig, backup_as_hidden, NULL);
@@ -756,9 +879,23 @@ void fm_edit_preference( GtkWindow* parent, int page )
         INIT_BOOL(builder, FmAppConfig, hide_close_btn, NULL);
         INIT_BOOL(builder, FmAppConfig, always_show_tabs, NULL);
         INIT_SPIN(builder, FmAppConfig, max_tab_chars, NULL);
+        if (fm_config->cutdown_menus)
+        {
+            gtk_widget_hide (GTK_WIDGET(gtk_builder_get_object(builder, "always_show_tabs")));
+            gtk_widget_hide (GTK_WIDGET(gtk_builder_get_object(builder, "hbox8")));
+        }
 
 #if FM_CHECK_VERSION(1, 0, 2)
-        INIT_BOOL(builder, FmConfig, no_child_non_expandable, NULL);
+        if (fm_config->cutdown_menus)
+        {
+            INIT_BOOL(builder, FmConfig, real_expanders, NULL);
+            gtk_widget_hide (GTK_WIDGET(gtk_builder_get_object(builder, "no_child_non_expandable")));
+        }
+        else
+        {
+            INIT_BOOL(builder, FmConfig, no_child_non_expandable, NULL);
+            INIT_BOOL(builder, FmConfig, real_expanders, NULL);
+        }
         gtk_widget_show(GTK_WIDGET(gtk_builder_get_object(builder, "vbox_dir_tree")));
 #endif
 
@@ -770,8 +907,14 @@ void fm_edit_preference( GtkWindow* parent, int page )
         INIT_BOOL(builder, FmConfig, places_root, NULL);
         INIT_BOOL(builder, FmConfig, places_computer, NULL);
         INIT_BOOL(builder, FmConfig, places_network, NULL);
-        gtk_widget_show(GTK_WIDGET(gtk_builder_get_object(builder, "vbox_places")));
+        INIT_BOOL(builder, FmConfig, places_volmounts, NULL);
+        places_box = GTK_WIDGET(gtk_builder_get_object(builder, "vbox_places"));
+        gtk_widget_show (places_box);
+        if (fm_config->cutdown_menus)
+            gtk_widget_set_sensitive (GTK_WIDGET(gtk_builder_get_object(builder, "vbox_places")), fm_config->cutdown_places);
 #endif
+
+        INIT_BOOL(builder, FmConfig, cutdown_menus, NULL);
 
         /* 'Volume management' tab */
         INIT_BOOL(builder, FmAppConfig, mount_on_startup, NULL);
@@ -781,6 +924,7 @@ void fm_edit_preference( GtkWindow* parent, int page )
         g_signal_connect(obj, "toggled", G_CALLBACK(on_autorun_toggled),
                          gtk_builder_get_object(builder, "autorun_choices_area"));
         INIT_BOOL(builder, FmAppConfig, media_in_new_tab, NULL);
+        if (!fm_config->cutdown_menus)
         gtk_widget_show(GTK_WIDGET(gtk_builder_get_object(builder, "media_in_new_tab")));
         //INIT_BOOL(builder, FmAppConfig, close_on_unmount, NULL);
 
@@ -980,6 +1124,37 @@ void fm_edit_preference( GtkWindow* parent, int page )
                              obj);
         }
 #endif
+
+        // new preferences
+        obj = gtk_builder_get_object (builder, "show_statusbar");
+        gtk_widget_set_visible (GTK_WIDGET(obj), fm_config->cutdown_menus);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(obj), app_config->show_statusbar);
+        g_signal_connect (obj, "toggled", G_CALLBACK(on_show_status), win);
+
+        obj = gtk_builder_get_object (builder, "show_places");
+        gtk_widget_set_visible (GTK_WIDGET(obj), fm_config->cutdown_menus);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(obj), fm_config->cutdown_places);
+        g_signal_connect (obj, "toggled", G_CALLBACK(on_show_places), win);
+
+        obj = gtk_builder_get_object (builder, "show_sidebar");
+        gtk_widget_set_visible (GTK_WIDGET(obj), fm_config->cutdown_menus);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(obj), !(app_config->side_pane_mode & FM_SP_HIDE));
+        g_signal_connect (obj, "toggled", G_CALLBACK(on_show_side_pane), win);
+
+        FmFolderModelCol by;
+        FmSortMode mode;
+        fm_folder_model_get_sort (fm_folder_view_get_model(fv), &by, &mode);
+
+        obj = gtk_builder_get_object (builder, "mingle_dirs");
+        gtk_widget_set_visible (GTK_WIDGET(obj), fm_config->cutdown_menus);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(obj), mode & FM_SORT_NO_FOLDER_FIRST);
+        g_signal_connect (obj, "toggled", G_CALLBACK(on_mingle_dirs), win);
+
+        obj = gtk_builder_get_object (builder, "ignore_case");
+        gtk_widget_set_visible (GTK_WIDGET(obj), fm_config->cutdown_menus);
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(obj), !(mode & FM_SORT_CASE_SENSITIVE));
+        g_signal_connect (obj, "toggled", G_CALLBACK(on_sort_ignore_case), win);
+
         g_signal_connect(tree_sel, "changed", G_CALLBACK(on_tab_label_list_sel_changed), notebook);
         g_signal_connect(notebook, "switch-page", G_CALLBACK(on_notebook_page_changed), tab_label_list);
         gtk_notebook_set_show_tabs(notebook, FALSE);

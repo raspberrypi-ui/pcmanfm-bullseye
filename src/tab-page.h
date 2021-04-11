@@ -103,6 +103,7 @@ FmTabPage* fm_tab_page_new(FmPath* path);
 void fm_tab_page_chdir(FmTabPage* page, FmPath* path);
 
 void fm_tab_page_set_show_hidden(FmTabPage* page, gboolean show_hidden);
+void fm_tab_page_set_show_places(FmTabPage* page, gboolean show_places);
 
 FmPath* fm_tab_page_get_cwd(FmTabPage* page);
 

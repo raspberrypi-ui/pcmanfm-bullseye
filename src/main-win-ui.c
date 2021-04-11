@@ -183,6 +183,96 @@ static const char main_menu_xml[] =
 "<accelerator action='SizeBigger2'/>"
 "<accelerator action='SizeSmaller2'/>";
 
+
+static const char main_menu_cutdown_xml[] =
+"<menubar>"
+  "<menu action='FileMenu'>"
+    "<menuitem action='New'/>"
+    "<separator/>"
+    "<menuitem action='CrNewFolder'/>"
+    "<menuitem action='CrNewBlank'/>"
+    "<separator/>"
+    "<menuitem action='Close'/>"
+  "</menu>"
+  "<menu action='EditMenu'>"
+    "<menuitem action='Cut'/>"
+    "<menuitem action='Copy'/>"
+    "<menuitem action='Paste'/>"
+    "<menuitem action='ToTrash'/>"
+    "<menuitem action='CopyPath'/>"
+    "<separator/>"
+    "<menuitem action='Link'/>"
+    /* TODO: implement "Create a duplicate" action
+    "<menuitem action='Duplicate'/>" */
+    "<separator/>"
+    "<menuitem action='SelAll'/>"
+    "<menuitem action='InvSel'/>"
+    "<separator/>"
+    "<menuitem action='Pref'/>"
+  "</menu>"
+  "<menu action='ViewMenu'>"
+    "<menuitem action='Reload'/>"
+    "<separator/>"
+    "<menuitem action='ShowHidden'/>"
+    "<separator/>"
+    "<menuitem action='SizeBigger'/>"
+    "<menuitem action='SizeSmaller'/>"
+    "<menuitem action='SizeDefault'/>"
+    "<separator/>"
+    "<menuitem action='Filter'/>"
+    "<menuitem action='ClearFilter'/>"
+  "</menu>"
+  "<menu action='SortMain'>"
+    "<menuitem action='Asc'/>"
+    "<menuitem action='Desc'/>"
+    "<separator/>"
+    "<menuitem action='ByName'/>"
+    "<menuitem action='ByMTime'/>"
+    "<menuitem action='BySize'/>"
+    "<menuitem action='ByExt'/>"
+  "</menu>"
+  "<menu action='GoMenu'>"
+    "<menuitem action='Home'/>"
+    "<menuitem action='Desktop'/>"
+    "<menuitem action='Trash'/>"
+    "<menuitem action='Apps'/>"
+    "<menuitem action='Computer'/>"
+    "<menuitem action='Network'/>"
+    "<separator/>"
+    "<menuitem action='Connect'/>"
+  "</menu>"
+  "<menu action='ToolMenu'>"
+#if FM_CHECK_VERSION(1, 0, 2)
+    "<menuitem action='Search'/>"
+    "<separator/>"
+#endif
+    "<menuitem action='Term'/>"
+#if FM_CHECK_VERSION(1, 2, 0)
+    "<menuitem action='Launch'/>"
+#endif
+    /* "<menuitem action='AsRoot'/>" */
+  "</menu>"
+"</menubar>"
+"<toolbar>"
+    "<toolitem action='NewCut'/>"
+    "<separator/>"
+    "<toolitem action='CrNewFolder'/>"
+    "<separator/>"
+    "<toolitem action='Home'/>"
+#if FM_CHECK_VERSION(1, 2, 0)
+    "<toolitem action='Prev'/>"
+#endif
+    "<toolitem action='Next'/>"
+    "<toolitem action='Up'/>"
+"</toolbar>"
+"<accelerator action='Location2'/>"
+"<accelerator action='Prev2'/>"
+"<accelerator action='Next2'/>"
+"<accelerator action='Reload2'/>"
+"<accelerator action='SizeBigger2'/>"
+"<accelerator action='SizeSmaller2'/>";
+
+
 /* For actions that are bounced to FmFolderView - check accels for accordance */
 static GtkActionEntry main_win_actions[]=
 {
@@ -192,6 +282,8 @@ static GtkActionEntry main_win_actions[]=
         {"CreateNew", GTK_STOCK_ADD, N_("C_reate New..."), "", NULL, NULL},
             {"NewFolder", "folder", N_("Folder"), "<Ctrl><Shift>N", NULL, G_CALLBACK(bounce_action)},
             {"NewBlank", NULL, N_("Empty File"), "<Ctrl><Alt>N", NULL, G_CALLBACK(bounce_action)},
+        {"CrNewFolder", "folder-new", N_("New _Folder..."), "<Ctrl><Shift>N", N_("Create new folder"), G_CALLBACK(bounce_action)},
+        {"CrNewBlank", NULL, N_("New Fil_e..."), "<Ctrl><Alt>N", N_("Create new empty file"), G_CALLBACK(bounce_action)},
         {"Prop", GTK_STOCK_PROPERTIES, N_("Folder Propertie_s"), NULL, NULL, G_CALLBACK(bounce_action)},
         {"CloseTab", GTK_STOCK_CLOSE, N_("_Close Tab"), "<Ctrl>W", NULL, G_CALLBACK(on_close_tab)},
         {"Close", GTK_STOCK_QUIT, N_("Close _Window"), "<Ctrl>Q", NULL, G_CALLBACK(on_close_win)},
@@ -220,11 +312,13 @@ static GtkActionEntry main_win_actions[]=
         /* other see below: 'ShowHidden' 'ShowStatus' 'Fullscreen' 'IconView'... */
         {"FolderView", "view-choose", N_("Fo_lder View Mode"), NULL, NULL, NULL},
         {"Sort", NULL, N_("S_ort Files"), NULL, NULL, NULL},
+        {"SortMain", NULL, N_("S_ort"), NULL, NULL, NULL},
         {"SizeBigger", GTK_STOCK_ZOOM_IN, NULL, "<Ctrl>KP_Add", NULL, G_CALLBACK(on_size_increment)},
         {"SizeSmaller", GTK_STOCK_ZOOM_OUT, N_("Zoom O_ut"), "<Ctrl>KP_Subtract", NULL, G_CALLBACK(on_size_decrement)},
         {"SizeDefault", GTK_STOCK_ZOOM_100, NULL, "<Ctrl>0", NULL, G_CALLBACK(on_size_default)},
 #if FM_CHECK_VERSION(1, 0, 2)
         {"Filter", "view-filter", N_("Fil_ter..."), "<Ctrl>E", NULL, G_CALLBACK(on_filter)},
+        {"ClearFilter", "view-filter", N_("Clear Filt_er"), NULL, NULL, G_CALLBACK(on_clear_filter)},
 #endif
     {"HelpMenu", NULL, N_("_Help"), NULL, NULL, NULL},
         {"About", GTK_STOCK_ABOUT, NULL, NULL, NULL, G_CALLBACK(on_about)},
@@ -236,7 +330,7 @@ static GtkActionEntry main_win_actions[]=
         {"Home", "user-home", N_("H_ome Folder"), "<Alt>Home", N_("Go to home folder"), G_CALLBACK(on_go_home)},
         {"Desktop", "user-desktop", N_("_Desktop"), NULL, N_("Go to desktop folder"), G_CALLBACK(on_go_desktop)},
         {"Trash", "user-trash", N_("_Trash Can"), NULL, N_("Open trash can"), G_CALLBACK(on_go_trash)},
-        {"Root", "drive-harddisk", N_("Filesyste_m Root"), NULL, N_("Go fo filesystem root"), NULL},
+        {"Root", "drive-harddisk", N_("Filesyste_m Root"), NULL, N_("Go to filesystem root"), NULL},
         {"Apps", "system-software-install", N_("_Applications"), NULL, N_("Go to root of applications menu folder"), G_CALLBACK(on_go_apps)},
         {"Computer", "computer", N_("Dev_ices"), NULL, N_("Go to list of devices connected to the computer"), G_CALLBACK(on_go_computer)},
         {"Network", GTK_STOCK_NETWORK, N_("Net_work"), NULL, N_("Go to list of places on the network"), G_CALLBACK(on_go_network)},
@@ -261,6 +355,7 @@ static GtkActionEntry main_win_actions[]=
     {"Reload2", NULL, NULL, "<Ctrl>R", NULL, G_CALLBACK(on_reload)},
     {"SizeBigger2", NULL, NULL, "<Ctrl>equal", NULL, G_CALLBACK(on_size_increment)},
     {"SizeSmaller2", NULL, NULL, "<Ctrl>minus", NULL, G_CALLBACK(on_size_decrement)},
+    {"NewCut", NULL, N_("_New Window"), "<Ctrl>N", N_("Open new file manager window"), G_CALLBACK(on_new_win)},
 };
 
 /* main_win_toggle_actions+main_win_mode_actions - see 'ViewMenu' for mnemonics */

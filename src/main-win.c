@@ -30,6 +30,7 @@
 #include <unistd.h> /* for get euid */
 #include <sys/types.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "pcmanfm.h"
 
@@ -40,6 +41,8 @@
 #include "connect-server.h"
 
 #include "gseal-gtk-compat.h"
+
+#define VIEW_TAB_LOC 4
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void fm_main_win_destroy(GtkWidget *object);
@@ -91,6 +94,7 @@ static void on_go_connect(GtkAction* act, FmMainWin* win);
 static void on_reload(GtkAction* act, FmMainWin* win);
 #if FM_CHECK_VERSION(1, 0, 2)
 static void on_filter(GtkAction* act, FmMainWin* win);
+static void on_clear_filter(GtkAction* act, FmMainWin* win);
 #endif
 static void on_show_hidden(GtkToggleAction* act, FmMainWin* win);
 #if FM_CHECK_VERSION(1, 2, 0)
@@ -109,6 +113,10 @@ static void on_toolbar_nav(GtkToggleAction *act, FmMainWin *win);
 static void on_toolbar_home(GtkToggleAction *act, FmMainWin *win);
 static void on_show_status(GtkToggleAction *action, FmMainWin *win);
 static void on_change_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
+static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win);
+static void on_change_mode_compact(GtkRadioAction* act, FmMainWin* win);
+static void on_change_mode_thumbnail(GtkRadioAction* act, FmMainWin* win);
+static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win);
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_sort_type(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_side_pane_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
@@ -246,8 +254,11 @@ static void update_sort_menu(FmMainWin* win)
         return;
     win->in_update = TRUE;
     /* we have to update this any time */
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/SavePerFolder");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), win->current_page->own_config);
+    }
     win->in_update = FALSE;
     if(fv == NULL || fm_folder_view_get_model(fv) == NULL)
         /* since 1.0.2 libfm have sorting only in FmFolderModel therefore
@@ -260,7 +271,7 @@ static void update_sort_menu(FmMainWin* win)
     if(mode != win->current_page->sort_type)
     {
         win->current_page->sort_type = mode;
-        if (win->current_page->own_config)
+        if (win->current_page->own_config && !fm_config->cutdown_menus)
         {
             fm_app_config_save_config_for_path(fm_folder_view_get_cwd(fv),
                                                mode, by, -1,
@@ -279,23 +290,35 @@ static void update_sort_menu(FmMainWin* win)
     type = fm_folder_view_get_sort_type(fv);
 #endif
     win->in_update = TRUE;
-    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/Asc");
+    if (!fm_config->cutdown_menus)
+        act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/Asc");
+    else
+        act = gtk_ui_manager_get_action(win->ui, "/menubar/SortMain/Asc");
     gtk_radio_action_set_current_value(GTK_RADIO_ACTION(act), type);
-    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/ByName");
+    if (!fm_config->cutdown_menus)
+        act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/ByName");
+    else
+        act = gtk_ui_manager_get_action(win->ui, "/menubar/SortMain/ByName");
 #if FM_CHECK_VERSION(1, 0, 2)
     if(by == FM_FOLDER_MODEL_COL_DEFAULT)
         by = FM_FOLDER_MODEL_COL_NAME;
 #endif
     gtk_radio_action_set_current_value(GTK_RADIO_ACTION(act), by);
 #if FM_CHECK_VERSION(1, 0, 2)
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/SortIgnoreCase");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act),
                                  (mode & FM_SORT_CASE_SENSITIVE) == 0);
+    }
 #endif
 #if FM_CHECK_VERSION(1, 2, 0)
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Sort/MingleDirs");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act),
                                  (mode & FM_SORT_NO_FOLDER_FIRST) != 0);
+    }
 #endif
     win->in_update = FALSE;
 }
@@ -310,6 +333,23 @@ static void update_view_menu(FmMainWin* win)
         return;
     win->in_update = TRUE;
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), fm_folder_view_get_show_hidden(fv));
+    if (fm_config->cutdown_menus)
+    {
+        GtkToolItem *item = NULL;
+        switch (fm_standard_view_get_mode (FM_STANDARD_VIEW (fv)))
+        {
+            case FM_FV_THUMBNAIL_VIEW : item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + (geteuid() ? 0 : 2));
+                                        break;
+            case FM_FV_ICON_VIEW :      item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 1 + (geteuid() ? 0 : 2));
+                                        break;
+            case FM_FV_COMPACT_VIEW :   item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 2 + (geteuid() ? 0 : 2));
+                                        break;
+            case FM_FV_LIST_VIEW :      item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 3 + (geteuid() ? 0 : 2));
+                                        break;
+        }
+        if (item) gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON(item), TRUE);
+    }
+    else
     gtk_radio_action_set_current_value(win->first_view_mode,
                                        fm_standard_view_get_mode(FM_STANDARD_VIEW(fv)));
     win->in_update = FALSE;
@@ -327,8 +367,11 @@ static void update_file_menu(FmMainWin* win, FmPath *path)
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ToolMenu/Launch");
     gtk_action_set_sensitive(act, path && can_term);
 #endif
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/GoMenu/Up");
     gtk_action_set_sensitive(act, path && fm_path_get_parent(path));
+    }
 }
 
 static void on_folder_view_sort_changed(FmFolderView* fv, FmMainWin* win)
@@ -345,26 +388,35 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmMainWin* 
 
     if(fv != win->folder_view)
         return;
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Open");
     gtk_action_set_sensitive(act, has_selected);
+    }
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Cut");
     gtk_action_set_sensitive(act, has_selected);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Copy");
     gtk_action_set_sensitive(act, has_selected);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/ToTrash");
     gtk_action_set_sensitive(act, has_selected);
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Del");
     gtk_action_set_sensitive(act, has_selected);
+    }
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/CopyPath");
     gtk_action_set_sensitive(act, has_selected);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Link");
     gtk_action_set_sensitive(act, has_selected);
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/CopyTo");
     gtk_action_set_sensitive(act, has_selected);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/MoveTo");
     gtk_action_set_sensitive(act, has_selected);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/FileProp");
     gtk_action_set_sensitive(act, has_selected);
+    }
     /* special handling for 'Rename' option: we can rename only single file,
        and also because GIO doesn't support changing the .desktop files
        display names, therefore we have to disable it in some cases */
@@ -380,8 +432,11 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmMainWin* 
             has_selected = TRUE;
         fm_file_info_list_unref(files);
     }
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/EditMenu/Rename");
     gtk_action_set_sensitive(act, has_selected);
+    }
 }
 
 static gboolean on_view_key_press_event(FmFolderView* fv, GdkEventKey* evt, FmMainWin* win)
@@ -473,6 +528,7 @@ static void on_bookmarks_changed(FmBookmarks* bm, FmMainWin* win)
 static void load_bookmarks(FmMainWin* win, GtkUIManager* ui)
 {
     GtkWidget* mi = gtk_ui_manager_get_widget(ui, "/menubar/BookmarksMenu");
+    if (!fm_config->cutdown_menus)
     win->bookmarks_menu = GTK_MENU_SHELL(gtk_menu_item_get_submenu(GTK_MENU_ITEM(mi)));
     win->bookmarks = fm_bookmarks_dup();
     g_signal_connect(win->bookmarks, "changed", G_CALLBACK(on_bookmarks_changed), win);
@@ -609,8 +665,8 @@ static void on_side_pane_chdir(FmSidePane* sp, guint button, FmPath* path, FmMai
         fm_main_win_chdir(win, path);
 
     /* bug #3531696: search is done on side pane instead of folder view */
-    if(win->folder_view)
-        gtk_widget_grab_focus(GTK_WIDGET(win->folder_view));
+    //if(win->folder_view)
+    //    gtk_widget_grab_focus(GTK_WIDGET(win->folder_view));
 }
 
 /* This callback is only connected to side pane of current active tab page. */
@@ -624,6 +680,7 @@ static void on_side_pane_mode_changed(FmSidePane* sp, FmMainWin* win)
     mode = fm_side_pane_get_mode(sp);
 
     /* update menu */
+    if (!fm_config->cutdown_menus)
     gtk_radio_action_set_current_value(win->first_side_pane_mode, mode);
 
     if(mode != (app_config->side_pane_mode & FM_SP_MODE_MASK))
@@ -638,7 +695,7 @@ static void on_always_show_tabs_changed(FmAppConfig *cfg, FmMainWin *win)
 {
     /* it will affect only the case when window has exactly 1 tab,
        all other cases will be handled when tab is added or removed */
-    if (gtk_notebook_get_n_pages(win->notebook) == 1)
+    if (gtk_notebook_get_n_pages(win->notebook) == 1 && !fm_config->cutdown_menus)
         gtk_notebook_set_show_tabs(win->notebook, app_config->always_show_tabs);
 }
 
@@ -652,6 +709,8 @@ static void on_toolsbar_changed(FmAppConfig *cfg, FmMainWin *win)
     if (win->in_update)
         return;
     win->in_update = TRUE; /* avoid recursion */
+    if (fm_config->cutdown_menus) active = TRUE;
+    else
     active = cfg->tb.visible;
     gtk_widget_set_visible(GTK_WIDGET(win->toolbar), active);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Toolbar/ToolbarNewWin");
@@ -777,36 +836,42 @@ static void fm_main_win_init(FmMainWin *win)
     radio_group = NULL;
     is_first = TRUE;
     str = g_string_new("ViewMode:");
-    xml = g_string_new("<menubar><menu action='ViewMenu'><menu action='FolderView'><placeholder name='ViewModes'>");
-    accel_str[6] = '1';
-    for(i = 0; i < fm_standard_view_get_n_modes(); i++)
+
+    if (fm_config->cutdown_menus)
+        xml = g_string_new("<menubar><menu action='ViewMenu'>");
+    else
     {
-        if(fm_standard_view_get_mode_label(i))
+        xml = g_string_new("<menubar><menu action='ViewMenu'><menu action='FolderView'><placeholder name='ViewModes'>");
+        accel_str[6] = '1';
+        for(i = 0; i < fm_standard_view_get_n_modes(); i++)
         {
-            g_string_append(str, fm_standard_view_mode_to_str(i));
-            mode_action = gtk_radio_action_new(str->str,
-                                               fm_standard_view_get_mode_label(i),
-                                               fm_standard_view_get_mode_tooltip(i),
-                                               fm_standard_view_get_mode_icon(i),
-                                               i);
-            gtk_radio_action_set_group(mode_action, radio_group);
-            radio_group = gtk_radio_action_get_group(mode_action);
-            gtk_action_group_add_action_with_accel(act_grp,
-                                                   GTK_ACTION(mode_action),
-                                                   accel_str);
-            if (is_first) /* work on first one only */
+            if(fm_standard_view_get_mode_label(i))
             {
-                win->first_view_mode = mode_action;
-                g_signal_connect(mode_action, "changed", G_CALLBACK(on_change_mode), win);
+                g_string_append(str, fm_standard_view_mode_to_str(i));
+                mode_action = gtk_radio_action_new(str->str,
+                                                   fm_standard_view_get_mode_label(i),
+                                                   fm_standard_view_get_mode_tooltip(i),
+                                                   fm_standard_view_get_mode_icon(i),
+                                                   i);
+                gtk_radio_action_set_group(mode_action, radio_group);
+                radio_group = gtk_radio_action_get_group(mode_action);
+                gtk_action_group_add_action_with_accel(act_grp,
+                                                       GTK_ACTION(mode_action),
+                                                       accel_str);
+                if (is_first) /* work on first one only */
+                {
+                    win->first_view_mode = mode_action;
+                    g_signal_connect(mode_action, "changed", G_CALLBACK(on_change_mode), win);
+                }
+                is_first = FALSE;
+                g_object_unref(mode_action);
+                g_string_append_printf(xml, "<menuitem action='%s'/>", str->str);
+                accel_str[6]++; /* <Ctrl>2 and so on */
+                g_string_truncate(str, 9); /* reset it to just "ViewMode:" */
             }
-            is_first = FALSE;
-            g_object_unref(mode_action);
-            g_string_append_printf(xml, "<menuitem action='%s'/>", str->str);
-            accel_str[6]++; /* <Ctrl>2 and so on */
-            g_string_truncate(str, 9); /* reset it to just "ViewMode:" */
         }
+        g_string_append(xml, "</placeholder></menu>"); /* it will be continued below */
     }
-    g_string_append(xml, "</placeholder></menu>"); /* it will be continued below */
 #else
     gtk_action_group_add_radio_actions(act_grp, main_win_mode_actions,
                                        G_N_ELEMENTS(main_win_mode_actions),
@@ -826,42 +891,47 @@ static void fm_main_win_init(FmMainWin *win)
                                        app_config->sort_by,
                                        G_CALLBACK(on_sort_by), win);
 #if FM_CHECK_VERSION(1, 2, 0)
-    /* generate list of modes dynamically from FmSidePane widget data */
-    radio_group = NULL;
-    is_first = TRUE;
-    g_string_assign(str, "SidePaneMode:");
-    g_string_append(xml, "<menu action='SidePane'><placeholder name='SidePaneModes'>");
-    accel_str[6] = '6';
-    for(i = 1; i <= fm_side_pane_get_n_modes(); i++)
+    if (fm_config->cutdown_menus)
+        g_string_append(xml, "</menu></menubar>");
+    else
     {
-        if(fm_side_pane_get_mode_label(i))
+        /* generate list of modes dynamically from FmSidePane widget data */
+        radio_group = NULL;
+        is_first = TRUE;
+        g_string_assign(str, "SidePaneMode:");
+        g_string_append(xml, "<menu action='SidePane'><placeholder name='SidePaneModes'>");
+        accel_str[6] = '6';
+        for(i = 1; i <= fm_side_pane_get_n_modes(); i++)
         {
-            g_string_append(str, fm_side_pane_get_mode_name(i));
-            mode_action = gtk_radio_action_new(str->str,
-                                               fm_side_pane_get_mode_label(i),
-                                               fm_side_pane_get_mode_tooltip(i),
-                                               NULL,
-                                               i);
-            gtk_radio_action_set_group(mode_action, radio_group);
-            radio_group = gtk_radio_action_get_group(mode_action);
-            gtk_action_group_add_action_with_accel(act_grp,
-                                                   GTK_ACTION(mode_action),
-                                                   accel_str);
-            if (is_first) /* work on first one only */
+            if(fm_side_pane_get_mode_label(i))
             {
-                win->first_side_pane_mode = mode_action;
-                g_signal_connect(mode_action, "changed", G_CALLBACK(on_side_pane_mode), win);
+                g_string_append(str, fm_side_pane_get_mode_name(i));
+                mode_action = gtk_radio_action_new(str->str,
+                                                   fm_side_pane_get_mode_label(i),
+                                                   fm_side_pane_get_mode_tooltip(i),
+                                                   NULL,
+                                                   i);
+                gtk_radio_action_set_group(mode_action, radio_group);
+                radio_group = gtk_radio_action_get_group(mode_action);
+                gtk_action_group_add_action_with_accel(act_grp,
+                                                       GTK_ACTION(mode_action),
+                                                       accel_str);
+                if (is_first) /* work on first one only */
+                {
+                    win->first_side_pane_mode = mode_action;
+                    g_signal_connect(mode_action, "changed", G_CALLBACK(on_side_pane_mode), win);
+                }
+                is_first = FALSE;
+                g_object_unref(mode_action);
+                g_string_append_printf(xml, "<menuitem action='%s'/>", str->str);
+                accel_str[6]++; /* <Ctrl>7 and so on */
+                g_string_truncate(str, 13); /* reset it to just "SidePaneMode:" */
             }
-            is_first = FALSE;
-            g_object_unref(mode_action);
-            g_string_append_printf(xml, "<menuitem action='%s'/>", str->str);
-            accel_str[6]++; /* <Ctrl>7 and so on */
-            g_string_truncate(str, 13); /* reset it to just "SidePaneMode:" */
         }
+        gtk_radio_action_set_current_value(win->first_side_pane_mode,
+                                           (app_config->side_pane_mode & FM_SP_MODE_MASK));
+        g_string_append(xml, "</placeholder></menu></menu></menubar>");
     }
-    gtk_radio_action_set_current_value(win->first_side_pane_mode,
-                                       (app_config->side_pane_mode & FM_SP_MODE_MASK));
-    g_string_append(xml, "</placeholder></menu></menu></menubar>");
     g_string_free(str, TRUE);
 #else
     gtk_action_group_add_radio_actions(act_grp, main_win_side_bar_mode_actions,
@@ -877,7 +947,10 @@ static void fm_main_win_init(FmMainWin *win)
     gtk_window_add_accel_group(GTK_WINDOW(win), accel_grp);
 
     gtk_ui_manager_insert_action_group(ui, act_grp, 0);
-    gtk_ui_manager_add_ui_from_string(ui, main_menu_xml, -1, NULL);
+    if (fm_config->cutdown_menus)
+        gtk_ui_manager_add_ui_from_string(ui, main_menu_cutdown_xml, -1, NULL);
+    else
+        gtk_ui_manager_add_ui_from_string(ui, main_menu_xml, -1, NULL);
 #if FM_CHECK_VERSION(1, 2, 0)
     /* add ui generated above */
     gtk_ui_manager_add_ui_from_string(ui, xml->str, xml->len, NULL);
@@ -894,10 +967,12 @@ static void fm_main_win_init(FmMainWin *win)
        is available only in 1.0.2 so just hide it */
     gtk_action_set_visible(act, FALSE);
 #endif
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(ui, "/menubar/ViewMenu/SidePane/ShowSidePane");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act),
                                  (app_config->side_pane_mode & FM_SP_HIDE) == 0);
-
+    }
 #if FM_CHECK_VERSION(1, 2, 0)
     /* disable "Find Files" button if module isn't available */
     if (!fm_module_is_in_use("vfs", "search"))
@@ -916,13 +991,13 @@ static void fm_main_win_init(FmMainWin *win)
     menubar = gtk_ui_manager_get_widget(ui, "/menubar");
     win->toolbar = GTK_TOOLBAR(gtk_ui_manager_get_widget(ui, "/toolbar"));
     /* FIXME: should make these optional */
-    gtk_toolbar_set_icon_size(win->toolbar, GTK_ICON_SIZE_SMALL_TOOLBAR);
+    gtk_toolbar_set_icon_size(win->toolbar, fm_config->cutdown_menus ? GTK_ICON_SIZE_LARGE_TOOLBAR : GTK_ICON_SIZE_SMALL_TOOLBAR);
     gtk_toolbar_set_style(win->toolbar, GTK_TOOLBAR_ICONS);
 
 #if FM_CHECK_VERSION(1, 2, 0)
     /* create history button after 'Prev' and add a popup menu to it */
     toolitem = fm_menu_tool_item_new();
-    gtk_toolbar_insert(win->toolbar, toolitem, 3);
+    gtk_toolbar_insert(win->toolbar, toolitem, fm_config->cutdown_menus ? -1 : 3);
 #else
     /* create 'Prev' button manually and add a popup menu to it */
     toolitem = (GtkToolItem*)g_object_new(GTK_TYPE_MENU_TOOL_BUTTON, NULL);
@@ -948,6 +1023,49 @@ static void fm_main_win_init(FmMainWin *win)
 
     gtk_box_pack_start( vbox, menubar, FALSE, TRUE, 0 );
     gtk_box_pack_start( vbox, GTK_WIDGET(win->toolbar), FALSE, TRUE, 0 );
+
+    if (fm_config->cutdown_menus)
+    {
+        GSList *tblist;
+        GtkWidget *icon;
+        toolitem = gtk_radio_tool_button_new (NULL);
+        icon = gtk_image_new_from_icon_name ("fm-thumbs", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
+        gtk_tool_item_set_tooltip_text(toolitem, _("View as thumbnails"));
+        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_thumbnail), win);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC);
+        tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
+
+        toolitem = gtk_radio_tool_button_new (tblist);
+        icon = gtk_image_new_from_icon_name ("fm-icons", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
+        gtk_tool_item_set_tooltip_text(toolitem, _("View as icons"));
+        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_icon), win);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 1);
+        tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
+
+        toolitem = gtk_radio_tool_button_new (tblist);
+        icon = gtk_image_new_from_icon_name ("fm-compact", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
+        gtk_tool_item_set_tooltip_text(toolitem, _("View as small icons"));
+        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_compact), win);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 2);
+        tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
+
+        toolitem = gtk_radio_tool_button_new (tblist);
+        icon = gtk_image_new_from_icon_name ("fm-details", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
+        gtk_tool_item_set_tooltip_text(toolitem, _("View as detailed list"));
+        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_detailed), win);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 3);
+
+        toolitem = gtk_separator_tool_item_new ();
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 4);
+
+        toolitem = GTK_TOOL_ITEM(gtk_ui_manager_get_widget (ui, "/ui/toolbar/NewCut"));
+        icon = gtk_image_new_from_icon_name ("fm-new", GTK_ICON_SIZE_LARGE_TOOLBAR);
+        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
+   }
 
     /* load bookmarks menu */
     load_bookmarks(win, ui);
@@ -1005,7 +1123,7 @@ static void fm_main_win_init(FmMainWin *win)
     /* status bar column showing volume free space */
     gtk_widget_style_get(GTK_WIDGET(win->statusbar), "shadow-type", &shadow_type, NULL);
     win->vol_status = (GtkFrame*)gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(win->vol_status, shadow_type);
+    gtk_frame_set_shadow_type(win->vol_status, GTK_SHADOW_NONE);
     gtk_box_pack_start(GTK_BOX(win->statusbar), GTK_WIDGET(win->vol_status), FALSE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(win->vol_status), gtk_label_new(NULL));
 
@@ -1019,12 +1137,15 @@ static void fm_main_win_init(FmMainWin *win)
     win->ui = ui;
 
     /* accessibility: setup relation for Go button and location entry */
+    if (!fm_config->cutdown_menus)
+    {
     atk_obj = gtk_widget_get_accessible(GTK_WIDGET(win->location));
     relation = atk_relation_new(&atk_obj, 1, ATK_RELATION_LABEL_FOR);
     /* use atk_view for button temporarily */
     atk_view = gtk_widget_get_accessible(gtk_ui_manager_get_widget(ui, "/toolbar/Go"));
     atk_relation_set_add(atk_object_ref_relation_set(atk_view), relation);
     g_object_unref(relation);
+    }
     /* setup relations with view */
     atk_view = gtk_widget_get_accessible(GTK_WIDGET(win->notebook));
     relation = atk_relation_new(&atk_obj, 1, ATK_RELATION_CONTROLLED_BY);
@@ -1035,6 +1156,13 @@ static void fm_main_win_init(FmMainWin *win)
     atk_relation_set_add(atk_object_ref_relation_set(atk_view), relation);
     g_object_unref(relation);
 
+    if (fm_config->cutdown_menus)
+    {
+#if FM_CHECK_VERSION(1, 0, 2)
+        act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ClearFilter");
+        gtk_action_set_sensitive(act, FALSE);
+#endif
+    }
     gtk_container_add(GTK_CONTAINER(win), GTK_WIDGET(vbox));
 }
 
@@ -1214,7 +1342,10 @@ static void on_search(GtkAction* act, FmMainWin* win)
     FmTabPage* page = win->current_page;
     FmPath* cwd = fm_tab_page_get_cwd(page);
     GList* l = g_list_append(NULL, cwd);
+    if (!fm_config->cutdown_menus)
     fm_launch_search_simple(GTK_WINDOW(win), NULL, l, pcmanfm_open_folder, NULL);
+    else
+    fm_launch_search_simple(GTK_WINDOW(win), NULL, l, pcmanfm_search_results, NULL);
     g_list_free(l);
 }
 #endif
@@ -1289,13 +1420,87 @@ static void on_change_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* 
     if (win->in_update)
         return;
     fm_standard_view_set_mode(FM_STANDARD_VIEW(win->folder_view), mode);
-    if (win->current_page->own_config)
+    if (win->current_page->own_config && !fm_config->cutdown_menus)
         fm_app_config_save_config_for_path(fm_folder_view_get_cwd(win->folder_view),
                                            win->current_page->sort_type,
                                            win->current_page->sort_by, mode,
                                            win->current_page->show_hidden, NULL);
     else
         win->current_page->view_mode = mode;
+}
+
+static void new_mode (FmMainWin *win, int mode)
+{
+    if (win->in_update)
+        return;
+    fm_standard_view_set_mode(FM_STANDARD_VIEW(win->folder_view), mode);
+    if (win->current_page->own_config && !fm_config->cutdown_menus)
+        fm_app_config_save_config_for_path(fm_folder_view_get_cwd(win->folder_view),
+                                           win->current_page->sort_type,
+                                           win->current_page->sort_by, mode,
+                                           win->current_page->show_hidden, NULL);
+    else
+        win->current_page->view_mode = mode;
+
+    char **columns;
+    if (win->current_page->columns) columns = win->current_page->columns;
+    else if (app_config->columns) columns = app_config->columns;
+    else return;
+
+    guint i, n = g_strv_length(columns);
+    FmFolderViewColumnInfo *infos = g_new(FmFolderViewColumnInfo, n);
+    GSList *infos_list = NULL;
+
+    for (i = 0; i < n; i++)
+    {
+        char *name = g_strdup(columns[i]), *delim;
+
+#if FM_CHECK_VERSION(1, 2, 0)
+        infos[i].width = 0;
+#endif
+        delim = strchr(name, ':');
+        if (delim)
+        {
+            *delim++ = '\0';
+#if FM_CHECK_VERSION(1, 2, 0)
+            infos[i].width = atoi(delim);
+#endif
+        }
+        infos[i].col_id = fm_folder_model_get_col_by_name(name);
+        g_free(name);
+        infos_list = g_slist_append(infos_list, &infos[i]);
+    }
+    fm_folder_view_set_columns(win->folder_view, infos_list);
+    g_slist_free(infos_list);
+    g_free(infos);
+    if (win->current_page->own_config)
+        win->current_page->columns = g_strdupv(columns);
+
+    if (fm_config->cutdown_menus)
+    {
+        app_config->view_mode = mode;
+        pcmanfm_save_config(FALSE);
+    }
+}
+
+static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win)
+{
+    new_mode (win, FM_FV_ICON_VIEW);
+}
+
+static void on_change_mode_compact(GtkRadioAction* act, FmMainWin* win)
+{
+    new_mode (win, FM_FV_COMPACT_VIEW);
+}
+
+static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win)
+{
+    new_mode (win, FM_FV_LIST_VIEW);
+}
+
+static void on_change_mode_thumbnail(GtkRadioAction* act, FmMainWin* win)
+{
+    new_mode (win, FM_FV_THUMBNAIL_VIEW);
 }
 
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win)
@@ -1313,7 +1518,7 @@ static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win)
     if(val != (int)win->current_page->sort_by)
     {
         win->current_page->sort_by = val;
-        if (win->current_page->own_config)
+        if (win->current_page->own_config && !fm_config->cutdown_menus)
         {
             fm_app_config_save_config_for_path(fm_folder_view_get_cwd(fv),
                                                win->current_page->sort_type,
@@ -1338,7 +1543,7 @@ static inline void update_sort_type_for_page(FmTabPage *page, FmFolderView *fv, 
     if(mode != page->sort_type)
     {
         page->sort_type = mode;
-        if (page->own_config)
+        if (page->own_config && !fm_config->cutdown_menus)
         {
             fm_app_config_save_config_for_path(fm_folder_view_get_cwd(fv), mode,
                                                page->sort_by, -1,
@@ -1516,13 +1721,19 @@ static void _update_hist_buttons(FmMainWin* win)
     GtkAction* act;
     FmNavHistory *nh = fm_tab_page_get_history(win->current_page);
 
+    if (!fm_config->cutdown_menus)
     act = gtk_ui_manager_get_action(win->ui, "/menubar/GoMenu/Next");
+    else
+    act = gtk_ui_manager_get_action(win->ui, "/toolbar/Next");
 #if FM_CHECK_VERSION(1, 0, 2)
     gtk_action_set_sensitive(act, fm_nav_history_get_cur_index(nh) > 0);
 #else
     gtk_action_set_sensitive(act, fm_nav_history_can_forward(nh));
 #endif
+    if (!fm_config->cutdown_menus)
     act = gtk_ui_manager_get_action(win->ui, "/menubar/GoMenu/Prev");
+    else
+    act = gtk_ui_manager_get_action(win->ui, "/toolbar/Prev");
     gtk_action_set_sensitive(act, fm_nav_history_can_back(nh));
     update_file_menu(win, fm_tab_page_get_cwd(win->current_page));
 }
@@ -1541,9 +1752,25 @@ static void on_go_forward(GtkAction* act, FmMainWin* win)
 
 static void on_go_up(GtkAction* act, FmMainWin* win)
 {
+    char *pathstr = fm_path_to_str(fm_tab_page_get_cwd(win->current_page));
+    if (pathstr && !strncmp (pathstr, "search://", 9))
+    {
+        char *qm = strchr (pathstr, '?');
+        if (qm) *qm = 0;
+        FmPath *newpath = fm_path_new_for_str (pathstr + 9);
+        if (newpath)
+        {
+            fm_main_win_chdir (win, newpath);
+            fm_path_unref(newpath);
+        }
+    }
+    else
+    {
     FmPath* parent = fm_path_get_parent(fm_tab_page_get_cwd(win->current_page));
     if(parent)
         fm_main_win_chdir( win, parent);
+    }
+    g_free (pathstr);
 }
 
 static void on_go_home(GtkAction* act, FmMainWin* win)
@@ -1553,11 +1780,30 @@ static void on_go_home(GtkAction* act, FmMainWin* win)
         fm_main_win_chdir_by_name(win, app_config->home_path);
     else
 #endif
+    {
+        gchar *home = home_dir ();
+        if (home)
+        {
+            fm_main_win_chdir_by_name (win, home);
+            g_free (home);
+        }
+        else
         fm_main_win_chdir( win, fm_path_get_home());
+    }
 }
 
 static void on_go_desktop(GtkAction* act, FmMainWin* win)
 {
+    gchar *home = home_dir ();
+    if (home)
+    {
+        char *path;
+        path = g_build_filename (home, "Desktop", NULL);
+        fm_main_win_chdir_by_name (win, path);
+        g_free (path);
+        g_free (home);
+    }
+    else
     fm_main_win_chdir(win, fm_path_get_desktop());
 }
 
@@ -1706,6 +1952,8 @@ FmMainWin* fm_main_win_add_win(FmMainWin* win, FmPath* path)
     fm_main_win_add_tab(win, path);
     gtk_window_present(GTK_WINDOW(win));
     /* set toolbar visibility and menu toggleables from config */
+    if (!fm_config->cutdown_menus)
+    {
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Toolbar/ShowToolbar");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), app_config->tb.visible);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Toolbar/ToolbarNewWin");
@@ -1716,14 +1964,21 @@ FmMainWin* fm_main_win_add_win(FmMainWin* win, FmPath* path)
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), app_config->tb.nav);
     act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/Toolbar/ToolbarHome");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), app_config->tb.home);
+    }
     /* the same for statusbar */
-    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ShowStatus");
-    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), app_config->show_statusbar);
     gtk_widget_set_visible(GTK_WIDGET(win->statusbar), app_config->show_statusbar);
     /* the same for path bar mode */
-    gtk_widget_hide(GTK_WIDGET(win->path_bar));
-    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/PathMode/PathEntry");
-    gtk_radio_action_set_current_value(GTK_RADIO_ACTION(act), app_config->pathbar_mode_buttons);
+    if (!fm_config->cutdown_menus)
+    {
+    gtk_widget_set_visible(GTK_WIDGET(win->location), app_config->pathbar_mode_buttons == 0);
+    gtk_widget_set_visible(gtk_ui_manager_get_widget(win->ui, "/toolbar/Go"), app_config->pathbar_mode_buttons == 0);
+    gtk_widget_set_visible(GTK_WIDGET(win->path_bar), app_config->pathbar_mode_buttons);
+    }
+    else
+    {
+    gtk_widget_set_visible(GTK_WIDGET(win->location), TRUE);
+    gtk_widget_set_visible(GTK_WIDGET(win->path_bar), FALSE);
+    }
     return win;
 }
 
@@ -1909,8 +2164,17 @@ static void bounce_action(GtkAction* act, FmMainWin* win)
 {
     GtkWindow *window = GTK_WINDOW(win);
     GtkWidget *current_focus;
+    GtkAction *newact;
+    const gchar *name = gtk_action_get_name (act);
 
     g_debug("bouncing action %s to popup", gtk_action_get_name(act));
+
+    /* remap names if needed */
+    if (!strncmp (name, "CrNew", 5))
+    {
+        newact = gtk_action_new (name + 2, NULL, NULL, NULL);
+        act = newact;
+    }
     /* save current focus */
     current_focus = gtk_window_get_focus(window);
     /* bug #3615003: if folder view does not have the focus, action will not work */
@@ -2189,7 +2453,7 @@ static void on_folder_view_filter_changed(FmFolderView* fv, FmMainWin* win)
     if(active != win->current_page->show_hidden)
     {
         win->current_page->show_hidden = active;
-        if (win->current_page->own_config)
+        if (win->current_page->own_config && !fm_config->cutdown_menus)
         {
             fm_app_config_save_config_for_path(fm_folder_view_get_cwd(fv),
                                                win->current_page->sort_type,
@@ -2293,8 +2557,14 @@ static void on_notebook_switch_page(GtkNotebook* nb, gpointer* new_page, guint n
     }
     else
     {
+        if (!fm_config->cutdown_menus)
         fm_side_pane_set_mode(win->side_pane,
                               (app_config->side_pane_mode & FM_SP_MODE_MASK));
+        else
+        {
+            if (fm_config->cutdown_places) fm_side_pane_set_mode(page->side_pane, FM_SP_HYBRID);
+            else fm_side_pane_set_mode(page->side_pane, FM_SP_DIR_TREE);
+        }
         gtk_widget_show_all(GTK_WIDGET(win->side_pane));
     }
 
@@ -2349,7 +2619,7 @@ static void on_notebook_page_added(GtkNotebook* nb, GtkWidget* page, guint num, 
     fm_folder_view_set_active(tab_page->folder_view, FALSE);
 
     if(gtk_notebook_get_n_pages(nb) > 1
-       || app_config->always_show_tabs)
+       || (app_config->always_show_tabs && !fm_config->cutdown_menus))
         gtk_notebook_set_show_tabs(nb, TRUE);
     else
         gtk_notebook_set_show_tabs(nb, FALSE);
@@ -2580,6 +2850,19 @@ static void on_reload(GtkAction* act, FmMainWin* win)
 }
 
 #if FM_CHECK_VERSION(1, 0, 2)
+static void update_filter_menu (FmMainWin* win)
+{
+    if (fm_config->cutdown_menus)
+    {
+        FmTabPage *page = win->current_page;
+        GtkAction* act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ClearFilter");
+        if (page->filter_pattern)
+            gtk_action_set_sensitive(act, TRUE);
+        else
+            gtk_action_set_sensitive(act, FALSE);
+    }
+}
+
 static void on_filter(GtkAction* act, FmMainWin* win)
 {
     FmTabPage *page = win->current_page;
@@ -2597,6 +2880,16 @@ static void on_filter(GtkAction* act, FmMainWin* win)
         fm_tab_page_set_filter_pattern(page, NULL);
     g_free(new_filter);
     gtk_window_set_title(GTK_WINDOW(win), fm_tab_page_get_title(page));
+    update_filter_menu (win);
+}
+
+static void on_clear_filter(GtkAction* act, FmMainWin* win)
+{
+    FmTabPage *page = win->current_page;
+
+    fm_tab_page_set_filter_pattern(page, NULL);
+    gtk_window_set_title(GTK_WINDOW(win), fm_tab_page_get_title(page));
+    update_filter_menu (win);
 }
 #endif
 

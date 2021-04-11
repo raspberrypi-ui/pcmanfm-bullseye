@@ -41,12 +41,16 @@ void pcmanfm_ref();
 void pcmanfm_unref();
 
 gboolean pcmanfm_open_folder(GAppLaunchContext* ctx, GList* folder_infos, gpointer user_data, GError** err);
+gboolean pcmanfm_search_results(GAppLaunchContext* ctx, GList* folder_infos, gpointer user_data, GError** err);
 
 char* pcmanfm_get_profile_dir(gboolean create);
+char* pcmanfm_get_system_profile_dir (void);
 void pcmanfm_save_config(gboolean immediate);
 
 gboolean pcmanfm_can_open_path_in_terminal(FmPath* dir);
 void pcmanfm_open_folder_in_terminal(GtkWindow* parent, FmPath* dir);
+
+gchar *home_dir (void);
 
 G_END_DECLS
 

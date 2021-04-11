@@ -76,9 +76,9 @@ IT_PROG_INTLTOOL([0.40.0])
 dnl libgtk version
 AC_ARG_WITH(gtk,
     [AC_HELP_STRING([--with-gtk=VER],
-        [choose Gtk+ version for libfm-gtk build (default=2)])],
+        [choose Gtk+ version for libfm-gtk build (default=3)])],
     [ac_with_gtk="${withval}"],
-    [ac_with_gtk=2])
+    [ac_with_gtk=3])
 
 # Checks for libraries.
 
