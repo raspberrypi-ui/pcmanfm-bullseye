@@ -498,8 +498,9 @@ static void fm_app_config_init(FmAppConfig *cfg)
 
     cfg->side_pane_mode = FM_SP_PLACES;
 
-    cfg->view_mode = FM_FV_ICON_VIEW;
+    cfg->view_mode = FM_FV_LIST_VIEW;
     cfg->show_hidden = FALSE;
+    cfg->show_thumbs = FALSE;
 #if FM_CHECK_VERSION(1, 0, 2)
     cfg->sort_type = FM_SORT_ASCENDING;
     cfg->sort_by = FM_FOLDER_MODEL_COL_NAME;
@@ -746,6 +747,7 @@ void fm_app_config_load_from_key_file(FmAppConfig* cfg, GKeyFile* kf)
        FM_STANDARD_VIEW_MODE_IS_VALID(tmp_int))
         cfg->view_mode = tmp_int;
     fm_key_file_get_bool(kf, "ui", "show_hidden", &cfg->show_hidden);
+    fm_key_file_get_bool(kf, "ui", "show_thumbs", &cfg->show_thumbs);
     _parse_sort(kf, "ui", &cfg->sort_type, &cfg->sort_by);
 #if FM_CHECK_VERSION(1, 0, 2)
     tmpv = g_key_file_get_string_list(kf, "ui", "columns", NULL, NULL);
@@ -905,7 +907,6 @@ gboolean fm_app_config_get_config_for_path(FmPath *path, GtkSortType *mode,
     FmPath *sub_path;
     FmFolderConfig *fc;
     gboolean ret = TRUE;
-
     /* preload defaults */
     if (mode)
         *mode = app_config->sort_type;
@@ -1177,6 +1178,7 @@ void fm_app_config_save_profile(FmAppConfig* cfg, const char* name)
         g_string_append_printf(buf, "view_mode=%d\n", cfg->view_mode);
 #endif
         g_string_append_printf(buf, "show_hidden=%d\n", cfg->show_hidden);
+        g_string_append_printf(buf, "show_thumbs=%d\n", cfg->show_thumbs);
         _save_sort(buf, cfg->sort_type, cfg->sort_by);
 #if FM_CHECK_VERSION(1, 0, 2)
         if (cfg->columns && cfg->columns[0])

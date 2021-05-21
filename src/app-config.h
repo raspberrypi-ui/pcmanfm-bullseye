@@ -135,6 +135,7 @@ struct _FmAppConfig
     /* default values for folder views */
     guint view_mode;
     gboolean show_hidden;
+    gboolean show_thumbs;
 #if FM_CHECK_VERSION(1, 0, 2)
     FmSortMode sort_type;
     FmFolderModelCol sort_by;

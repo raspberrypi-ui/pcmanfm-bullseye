@@ -97,6 +97,7 @@ static void on_filter(GtkAction* act, FmMainWin* win);
 static void on_clear_filter(GtkAction* act, FmMainWin* win);
 #endif
 static void on_show_hidden(GtkToggleAction* act, FmMainWin* win);
+static void on_show_thumbs(GtkToggleAction* act, FmMainWin* win);
 #if FM_CHECK_VERSION(1, 2, 0)
 static void on_mingle_dirs(GtkToggleAction* act, FmMainWin* win);
 #endif
@@ -114,8 +115,6 @@ static void on_toolbar_home(GtkToggleAction *act, FmMainWin *win);
 static void on_show_status(GtkToggleAction *action, FmMainWin *win);
 static void on_change_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win);
-static void on_change_mode_compact(GtkRadioAction* act, FmMainWin* win);
-static void on_change_mode_thumbnail(GtkRadioAction* act, FmMainWin* win);
 static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win);
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_sort_type(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
@@ -328,24 +327,22 @@ static void update_view_menu(FmMainWin* win)
     GtkAction* act;
     FmFolderView* fv = win->folder_view;
 
-    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ShowHidden");
     if (win->in_update)
         return;
     win->in_update = TRUE;
+    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ShowHidden");
     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), fm_folder_view_get_show_hidden(fv));
+    act = gtk_ui_manager_get_action(win->ui, "/menubar/ViewMenu/ShowThumbs");
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(act), fm_standard_view_get_thumbs(FM_STANDARD_VIEW(fv)));
     if (fm_config->cutdown_menus)
     {
         GtkToolItem *item = NULL;
         switch (fm_standard_view_get_mode (FM_STANDARD_VIEW (fv)))
         {
-            case FM_FV_THUMBNAIL_VIEW : item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + (geteuid() ? 0 : 2));
-                                        break;
-            case FM_FV_ICON_VIEW :      item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 1 + (geteuid() ? 0 : 2));
-                                        break;
-            case FM_FV_COMPACT_VIEW :   item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 2 + (geteuid() ? 0 : 2));
-                                        break;
-            case FM_FV_LIST_VIEW :      item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 3 + (geteuid() ? 0 : 2));
-                                        break;
+            case FM_FV_ICON_OR_THUMB_VIEW : item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + (geteuid() ? 0 : 2));
+                                            break;
+            case FM_FV_LIST_VIEW :          item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 1 + (geteuid() ? 0 : 2));
+                                            break;
         }
         if (item) gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON(item), TRUE);
     }
@@ -1029,27 +1026,11 @@ static void fm_main_win_init(FmMainWin *win)
         GSList *tblist;
         GtkWidget *icon;
         toolitem = gtk_radio_tool_button_new (NULL);
-        icon = gtk_image_new_from_icon_name ("fm-thumbs", GTK_ICON_SIZE_LARGE_TOOLBAR);
-        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
-        gtk_tool_item_set_tooltip_text(toolitem, _("View as thumbnails"));
-        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_thumbnail), win);
-        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC);
-        tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
-
-        toolitem = gtk_radio_tool_button_new (tblist);
         icon = gtk_image_new_from_icon_name ("fm-icons", GTK_ICON_SIZE_LARGE_TOOLBAR);
         gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
         gtk_tool_item_set_tooltip_text(toolitem, _("View as icons"));
         g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_icon), win);
-        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 1);
-        tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
-
-        toolitem = gtk_radio_tool_button_new (tblist);
-        icon = gtk_image_new_from_icon_name ("fm-compact", GTK_ICON_SIZE_LARGE_TOOLBAR);
-        gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
-        gtk_tool_item_set_tooltip_text(toolitem, _("View as small icons"));
-        g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_compact), win);
-        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 2);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC);
         tblist = gtk_radio_tool_button_get_group (GTK_RADIO_TOOL_BUTTON(toolitem));
 
         toolitem = gtk_radio_tool_button_new (tblist);
@@ -1057,10 +1038,10 @@ static void fm_main_win_init(FmMainWin *win)
         gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON(toolitem), icon);
         gtk_tool_item_set_tooltip_text(toolitem, _("View as detailed list"));
         g_signal_connect(toolitem, "clicked", G_CALLBACK(on_change_mode_detailed), win);
-        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 3);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 1);
 
         toolitem = gtk_separator_tool_item_new ();
-        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 4);
+        gtk_toolbar_insert (win->toolbar, toolitem, VIEW_TAB_LOC + 2);
 
         toolitem = GTK_TOOL_ITEM(gtk_ui_manager_get_widget (ui, "/ui/toolbar/NewCut"));
         icon = gtk_image_new_from_icon_name ("fm-new", GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -1390,6 +1371,15 @@ static void on_show_hidden(GtkToggleAction* act, FmMainWin* win)
     fm_tab_page_set_show_hidden(page, active);
 }
 
+static void on_show_thumbs (GtkToggleAction* act, FmMainWin* win)
+{
+    gboolean active = gtk_toggle_action_get_active (act);
+    fm_standard_view_set_thumbs (FM_STANDARD_VIEW (win->folder_view), active);
+    if (app_config->view_mode == FM_FV_ICON_OR_THUMB_VIEW) fm_tab_page_reload (win->current_page);
+    app_config->show_thumbs = active;
+    pcmanfm_save_config (FALSE);
+}
+
 static void on_fullscreen(GtkToggleAction* act, FmMainWin* win)
 {
     gboolean active = gtk_toggle_action_get_active(act);
@@ -1485,22 +1475,12 @@ static void new_mode (FmMainWin *win, int mode)
 
 static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win)
 {
-    new_mode (win, FM_FV_ICON_VIEW);
-}
-
-static void on_change_mode_compact(GtkRadioAction* act, FmMainWin* win)
-{
-    new_mode (win, FM_FV_COMPACT_VIEW);
+    new_mode (win, FM_FV_ICON_OR_THUMB_VIEW);
 }
 
 static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win)
 {
     new_mode (win, FM_FV_LIST_VIEW);
-}
-
-static void on_change_mode_thumbnail(GtkRadioAction* act, FmMainWin* win)
-{
-    new_mode (win, FM_FV_THUMBNAIL_VIEW);
 }
 
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win)
@@ -2218,6 +2198,7 @@ static void on_size_decrement(GtkAction *act, FmMainWin *win)
     switch (mode)
     {
     case FM_FV_ICON_VIEW:
+    case FM_FV_ICON_OR_THUMB_VIEW:
         size = fm_config->big_icon_size;
         if (size < 24)
             return;
@@ -2245,6 +2226,7 @@ static void on_size_decrement(GtkAction *act, FmMainWin *win)
     switch (mode)
     {
     case FM_FV_ICON_VIEW:
+    case FM_FV_ICON_OR_THUMB_VIEW:
         fm_config->big_icon_size = icon_sizes[i];
         fm_config_emit_changed(fm_config, "big_icon_size");
         break;
@@ -2271,6 +2253,7 @@ static void on_size_increment(GtkAction *act, FmMainWin *win)
     switch (mode)
     {
     case FM_FV_ICON_VIEW:
+    case FM_FV_ICON_OR_THUMB_VIEW:
         size = fm_config->big_icon_size;
         if (size > 200)
             return;
@@ -2297,6 +2280,7 @@ static void on_size_increment(GtkAction *act, FmMainWin *win)
     switch (mode)
     {
     case FM_FV_ICON_VIEW:
+    case FM_FV_ICON_OR_THUMB_VIEW:
         fm_config->big_icon_size = icon_sizes[i];
         fm_config_emit_changed(fm_config, "big_icon_size");
         break;
@@ -2322,6 +2306,7 @@ static void on_size_default(GtkAction *act, FmMainWin *win)
     switch (mode)
     {
     case FM_FV_ICON_VIEW:
+    case FM_FV_ICON_OR_THUMB_VIEW:
         if (fm_config->big_icon_size == 48)
             return;
         fm_config->big_icon_size = 48;

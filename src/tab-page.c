@@ -953,11 +953,13 @@ static void fm_tab_page_init(FmTabPage *page)
 
     /* setup initial view mode for the tab from configuration */
     page->view_mode = app_config->view_mode;
+    page->show_thumbs = app_config->show_thumbs;
 
     /* handlers below will be used when FmMainWin detects new page added */
     folder_view = (FmFolderView*)fm_standard_view_new(app_config->view_mode,
                                                       update_files_popup,
                                                       open_folder_func);
+    fm_standard_view_set_thumbs (folder_view, app_config->show_thumbs);
     /* FIXME: it is inefficient to set view mode to default one then change
        it per-folder but it will be default in most cases but might it be
        even more inefficient to add an object property for the mode and set

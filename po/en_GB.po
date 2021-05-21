@@ -1021,9 +1021,8 @@ msgid "_Ignore Name Case"
 msgstr ""
 
 #: ../src/main-win-ui.c:369
-#, fuzzy
 msgid "Sho_w Hidden"
-msgstr "Show Hidde_n"
+msgstr "Sho_w Hidden Files"
 
 #. Note to translators: this save is meant for folder's settings such as sort
 #: ../src/main-win-ui.c:371

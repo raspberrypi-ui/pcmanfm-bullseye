@@ -77,6 +77,7 @@ struct _FmTabPage
 #endif
     guint view_mode;
     gboolean show_hidden : 1;
+    gboolean show_thumbs : 1;
     gboolean own_config : 1;
     gboolean busy : 1;
     guint update_scroll_id;
