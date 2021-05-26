@@ -988,7 +988,8 @@ static void fm_main_win_init(FmMainWin *win)
     menubar = gtk_ui_manager_get_widget(ui, "/menubar");
     win->toolbar = GTK_TOOLBAR(gtk_ui_manager_get_widget(ui, "/toolbar"));
     /* FIXME: should make these optional */
-    gtk_toolbar_set_icon_size(win->toolbar, fm_config->cutdown_menus ? GTK_ICON_SIZE_LARGE_TOOLBAR : GTK_ICON_SIZE_SMALL_TOOLBAR);
+    if (!fm_config->cutdown_menus)
+        gtk_toolbar_set_icon_size(win->toolbar, GTK_ICON_SIZE_SMALL_TOOLBAR);
     gtk_toolbar_set_style(win->toolbar, GTK_TOOLBAR_ICONS);
 
 #if FM_CHECK_VERSION(1, 2, 0)
