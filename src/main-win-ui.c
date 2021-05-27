@@ -213,6 +213,9 @@ static const char main_menu_cutdown_xml[] =
   "<menu action='ViewMenu'>"
     "<menuitem action='Reload'/>"
     "<separator/>"
+    "<menuitem action='TogIconView'/>"
+    "<menuitem action='TogListView'/>"
+    "<separator/>"
     "<menuitem action='ShowThumbs'/>"
     "<menuitem action='ShowHidden'/>"
     "<separator/>"
@@ -435,3 +438,8 @@ static GtkRadioActionEntry main_win_path_bar_mode_actions[]=
     {"PathBar", NULL, N_("_Buttons"), NULL, NULL, 1}
 };
 
+static GtkRadioActionEntry main_win_cutdown_mode_actions[]=
+{
+    {"TogIconView", NULL, N_("_Icon View"), "<Ctrl>1", NULL, FM_FV_ICON_OR_THUMB_VIEW},
+    {"TogListView", NULL, N_("_List View"), "<Ctrl>2", NULL, FM_FV_LIST_VIEW},
+};

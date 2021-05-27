@@ -114,8 +114,9 @@ static void on_toolbar_nav(GtkToggleAction *act, FmMainWin *win);
 static void on_toolbar_home(GtkToggleAction *act, FmMainWin *win);
 static void on_show_status(GtkToggleAction *action, FmMainWin *win);
 static void on_change_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
-static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win);
-static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win);
+static void on_change_mode_cutdown(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
+static void on_change_mode_icon (GtkRadioToolButton *btn, FmMainWin* win);
+static void on_change_mode_detailed (GtkRadioToolButton *btn, FmMainWin* win);
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_sort_type(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_side_pane_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
@@ -887,6 +888,11 @@ static void fm_main_win_init(FmMainWin *win)
                                        G_N_ELEMENTS(main_win_sort_by_actions),
                                        app_config->sort_by,
                                        G_CALLBACK(on_sort_by), win);
+    if (fm_config->cutdown_menus)
+    gtk_action_group_add_radio_actions(act_grp, main_win_cutdown_mode_actions,
+                                       G_N_ELEMENTS(main_win_cutdown_mode_actions),
+                                       app_config->view_mode,
+                                       G_CALLBACK(on_change_mode_cutdown), win);
 #if FM_CHECK_VERSION(1, 2, 0)
     if (fm_config->cutdown_menus)
         g_string_append(xml, "</menu></menubar>");
@@ -1474,14 +1480,35 @@ static void new_mode (FmMainWin *win, int mode)
     }
 }
 
-static void on_change_mode_icon(GtkRadioAction* act, FmMainWin* win)
+static void on_change_mode_cutdown (GtkRadioAction* act, GtkRadioAction *cur, FmMainWin *win)
 {
-    new_mode (win, FM_FV_ICON_OR_THUMB_VIEW);
+    GtkToolItem *item = NULL;
+
+    switch (gtk_radio_action_get_current_value (cur))
+    {
+        case FM_FV_ICON_OR_THUMB_VIEW : item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + (geteuid () ? 0 : 2));
+                                        break;
+        case FM_FV_LIST_VIEW :          item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 1 + (geteuid () ? 0 : 2));
+                                        break;
+    }
+    if (item && !gtk_toggle_tool_button_get_active (item))
+        gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (item), TRUE);
 }
 
-static void on_change_mode_detailed(GtkRadioAction* act, FmMainWin* win)
+static void on_change_mode_icon (GtkRadioToolButton *btn, FmMainWin *win)
 {
+    if (!gtk_toggle_tool_button_get_active (btn)) return;
+    new_mode (win, FM_FV_ICON_OR_THUMB_VIEW);
+    GtkAction *mact = gtk_ui_manager_get_action (win->ui, "/menubar/ViewMenu/TogIconView");
+    gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (mact), TRUE);
+}
+
+static void on_change_mode_detailed (GtkRadioToolButton *btn, FmMainWin *win)
+{
+    if (!gtk_toggle_tool_button_get_active (btn)) return;
     new_mode (win, FM_FV_LIST_VIEW);
+    GtkAction *mact = gtk_ui_manager_get_action (win->ui, "/menubar/ViewMenu/TogListView");
+    gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (mact), TRUE);
 }
 
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win)
