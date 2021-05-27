@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pcmanfm 1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-07 10:49+0000\n"
+"POT-Creation-Date: 2021-05-27 14:26+0100\n"
 "PO-Revision-Date: 2015-08-17 01:31+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -384,7 +384,7 @@ msgstr "Home Folder"
 msgid "Des_ktop"
 msgstr "_Desktop"
 
-#: ../data/ui/pref.glade.h:57 ../src/main-win-ui.c:330
+#: ../data/ui/pref.glade.h:57 ../src/main-win-ui.c:336
 msgid "_Trash Can"
 msgstr "Waste_basket"
 
@@ -396,7 +396,7 @@ msgstr ""
 msgid "App_lications"
 msgstr "App_lications"
 
-#: ../data/ui/pref.glade.h:60 ../src/main-win-ui.c:333
+#: ../data/ui/pref.glade.h:60 ../src/main-win-ui.c:339
 msgid "Dev_ices"
 msgstr ""
 
@@ -693,474 +693,482 @@ msgstr "Stic_k to Current Position"
 msgid "Snap to _Grid"
 msgstr "Snap to _Grid"
 
-#: ../src/desktop.c:1225
+#: ../src/desktop.c:1226
 #, fuzzy
 msgid "Activate file"
 msgstr "<image file>"
 
-#: ../src/desktop.c:1227
+#: ../src/desktop.c:1228
 #, fuzzy
 msgid "Show file menu"
 msgstr "Show Hidde_n"
 
-#: ../src/desktop.c:1645
+#: ../src/desktop.c:1649
 #, fuzzy
 msgid "Show desktop menu"
 msgstr "<b>Show desktop icons</b>"
 
 #. FIXME: set name by monitor
-#: ../src/desktop.c:1717
+#: ../src/desktop.c:1721
 #, fuzzy
 msgid "Desktop"
 msgstr "_Desktop"
 
-#: ../src/main-win-ui.c:277
+#: ../src/main-win-ui.c:283
 msgid "_File"
 msgstr "_File"
 
-#: ../src/main-win-ui.c:278 ../src/main-win-ui.c:356
+#: ../src/main-win-ui.c:284 ../src/main-win-ui.c:362
 msgid "_New Window"
 msgstr "_New Window"
 
-#: ../src/main-win-ui.c:278 ../src/main-win-ui.c:356
+#: ../src/main-win-ui.c:284 ../src/main-win-ui.c:362
 #, fuzzy
 msgid "Open new file manager window"
 msgstr "Open in File Manager"
 
-#: ../src/main-win-ui.c:279
+#: ../src/main-win-ui.c:285
 msgid "New T_ab"
 msgstr "New T_ab"
 
-#: ../src/main-win-ui.c:279
+#: ../src/main-win-ui.c:285
 msgid "Create new tab for this folder"
 msgstr "Create new tab for this folder"
 
-#: ../src/main-win-ui.c:280
+#: ../src/main-win-ui.c:286
 msgid "C_reate New..."
 msgstr "C_reate New..."
 
-#: ../src/main-win-ui.c:281
+#: ../src/main-win-ui.c:287
 msgid "Folder"
 msgstr "Folder"
 
-#: ../src/main-win-ui.c:282
+#: ../src/main-win-ui.c:288
 msgid "Empty File"
 msgstr "Empty File"
 
-#: ../src/main-win-ui.c:283
+#: ../src/main-win-ui.c:289
+msgid "New _Folder..."
+msgstr "New _Folder..."
+
+#: ../src/main-win-ui.c:289
 msgid "Create _Folder"
 msgstr "Create _Folder"
 
-#: ../src/main-win-ui.c:284
+#: ../src/main-win-ui.c:290
+msgid "New Fil_e..."
+msgstr "New Fil_e..."
+
+#: ../src/main-win-ui.c:290
 msgid "Create _Empty File"
 msgstr "Create _Empty File"
 
-#: ../src/main-win-ui.c:285
+#: ../src/main-win-ui.c:291
 msgid "Folder Propertie_s"
 msgstr ""
 
-#: ../src/main-win-ui.c:286
+#: ../src/main-win-ui.c:292
 msgid "_Close Tab"
 msgstr "_Close Tab"
 
-#: ../src/main-win-ui.c:287
+#: ../src/main-win-ui.c:293
 msgid "Close _Window"
 msgstr "Close _Window"
 
-#: ../src/main-win-ui.c:288
+#: ../src/main-win-ui.c:294
 msgid "_Edit"
 msgstr "_Edit"
 
-#: ../src/main-win-ui.c:290
+#: ../src/main-win-ui.c:296
 msgid "C_ut"
 msgstr ""
 
-#: ../src/main-win-ui.c:293
+#: ../src/main-win-ui.c:299
 msgid "Move to _Trash"
 msgstr "Move to Waste_basket"
 
-#: ../src/main-win-ui.c:295
+#: ../src/main-win-ui.c:301
 msgid "Copy Pat_h(s)"
 msgstr ""
 
-#: ../src/main-win-ui.c:296
+#: ../src/main-win-ui.c:302
 #, fuzzy
 msgid "R_ename..."
 msgstr "_Rename"
 
-#: ../src/main-win-ui.c:297
+#: ../src/main-win-ui.c:303
 msgid "D_uplicate..."
 msgstr ""
 
-#: ../src/main-win-ui.c:298
+#: ../src/main-win-ui.c:304
 #, fuzzy
 msgid "Create Lin_k..."
 msgstr "Create _New..."
 
-#: ../src/main-win-ui.c:299
+#: ../src/main-win-ui.c:305
 #, fuzzy
 msgid "_Move to..."
 msgstr "_Move To..."
 
-#: ../src/main-win-ui.c:300
+#: ../src/main-win-ui.c:306
 #, fuzzy
 msgid "Copy to_..."
 msgstr "C_opy To..."
 
-#: ../src/main-win-ui.c:301
+#: ../src/main-win-ui.c:307
 msgid "Propertie_s"
 msgstr ""
 
-#: ../src/main-win-ui.c:303
+#: ../src/main-win-ui.c:309
 msgid "_Invert Selection"
 msgstr "_Invert Selection"
 
-#: ../src/main-win-ui.c:304
+#: ../src/main-win-ui.c:310
 msgid "Prefere_nces"
 msgstr "Prefere_nces"
 
-#: ../src/main-win-ui.c:305
+#: ../src/main-win-ui.c:311
 msgid "_View"
 msgstr "_View"
 
-#: ../src/main-win-ui.c:306
+#: ../src/main-win-ui.c:312
 msgid "_Reload Folder"
 msgstr "_Reload Folder"
 
-#: ../src/main-win-ui.c:306
+#: ../src/main-win-ui.c:312
 msgid "Reload current folder"
 msgstr "Reload current folder"
 
-#: ../src/main-win-ui.c:307
+#: ../src/main-win-ui.c:313
 #, fuzzy
 msgid "Tool_bar"
 msgstr "Tool_s"
 
-#: ../src/main-win-ui.c:308
+#: ../src/main-win-ui.c:314
 msgid "Pat_h Bar"
 msgstr ""
 
-#: ../src/main-win-ui.c:309
+#: ../src/main-win-ui.c:315
 msgid "Side _Pane"
 msgstr "Side _Pane"
 
 #. other see below: 'ShowHidden' 'ShowStatus' 'Fullscreen' 'IconView'...
-#: ../src/main-win-ui.c:311
+#: ../src/main-win-ui.c:317
 #, fuzzy
 msgid "Fo_lder View Mode"
 msgstr "Vie_w Mode:"
 
-#: ../src/main-win-ui.c:312
+#: ../src/main-win-ui.c:318
 msgid "S_ort Files"
 msgstr "S_ort Files"
 
-#: ../src/main-win-ui.c:313
+#: ../src/main-win-ui.c:319
 msgid "S_ort"
 msgstr "S_ort"
 
-#: ../src/main-win-ui.c:315
+#: ../src/main-win-ui.c:321
 msgid "Zoom O_ut"
 msgstr ""
 
-#: ../src/main-win-ui.c:318
+#: ../src/main-win-ui.c:324
 msgid "Fil_ter..."
 msgstr ""
 
-#: ../src/main-win-ui.c:319
+#: ../src/main-win-ui.c:325
 msgid "Clear Filt_er"
 msgstr "Clear Filt_er"
 
-#: ../src/main-win-ui.c:321
+#: ../src/main-win-ui.c:327
 msgid "_Help"
 msgstr "_Help"
 
-#: ../src/main-win-ui.c:323
+#: ../src/main-win-ui.c:329
 #, fuzzy
 msgid "_Keyboard Navigation"
 msgstr "_Keyboard navigation"
 
-#: ../src/main-win-ui.c:324
+#: ../src/main-win-ui.c:330
 msgid "_Go"
 msgstr "_Go"
 
-#: ../src/main-win-ui.c:325
+#: ../src/main-win-ui.c:331
 msgid "_Previous Folder"
 msgstr "_Previous Folder"
 
-#: ../src/main-win-ui.c:325
+#: ../src/main-win-ui.c:331
 msgid "Return to previous folder in history"
 msgstr ""
 
-#: ../src/main-win-ui.c:326
+#: ../src/main-win-ui.c:332
 msgid "_Next Folder"
 msgstr "_Next Folder"
 
-#: ../src/main-win-ui.c:326
+#: ../src/main-win-ui.c:332
 msgid "Go forward to next folder in history"
 msgstr ""
 
-#: ../src/main-win-ui.c:327
+#: ../src/main-win-ui.c:333
 msgid "Pa_rent Folder"
 msgstr "Pa_rent Folder"
 
-#: ../src/main-win-ui.c:327
+#: ../src/main-win-ui.c:333
 msgid "Go to parent Folder"
 msgstr "Go to parent folder"
 
-#: ../src/main-win-ui.c:328
+#: ../src/main-win-ui.c:334
 msgid "H_ome Folder"
 msgstr "H_ome Folder"
 
-#: ../src/main-win-ui.c:328
+#: ../src/main-win-ui.c:334
 #, fuzzy
 msgid "Go to home folder"
 msgstr "Go to parent Folder"
 
-#: ../src/main-win-ui.c:329
+#: ../src/main-win-ui.c:335
 msgid "_Desktop"
 msgstr "_Desktop"
 
-#: ../src/main-win-ui.c:329
+#: ../src/main-win-ui.c:335
 #, fuzzy
 msgid "Go to desktop folder"
 msgstr "Go to parent Folder"
 
-#: ../src/main-win-ui.c:330
+#: ../src/main-win-ui.c:336
 msgid "Open trash can"
 msgstr "Open Wastebasket"
 
-#: ../src/main-win-ui.c:331
+#: ../src/main-win-ui.c:337
 msgid "Filesyste_m Root"
 msgstr ""
 
-#: ../src/main-win-ui.c:331
-msgid "Go fo filesystem root"
+#: ../src/main-win-ui.c:337
+msgid "Go to filesystem root"
 msgstr ""
 
-#: ../src/main-win-ui.c:332
+#: ../src/main-win-ui.c:338
 msgid "_Applications"
 msgstr "_Applications"
 
-#: ../src/main-win-ui.c:332
+#: ../src/main-win-ui.c:338
 msgid "Go to root of applications menu folder"
 msgstr ""
 
-#: ../src/main-win-ui.c:333
+#: ../src/main-win-ui.c:339
 #, fuzzy
 msgid "Go to list of devices connected to the computer"
 msgstr "S_how icons of volumes on desktop"
 
-#: ../src/main-win-ui.c:334
+#: ../src/main-win-ui.c:340
 #, fuzzy
 msgid "Net_work"
 msgstr "Net_work Drives"
 
-#: ../src/main-win-ui.c:334
+#: ../src/main-win-ui.c:340
 #, fuzzy
 msgid "Go to list of places on the network"
 msgstr "S_how icons of volumes on desktop"
 
-#: ../src/main-win-ui.c:335
+#: ../src/main-win-ui.c:341
 msgid "_Go to Location..."
 msgstr ""
 
-#: ../src/main-win-ui.c:336
+#: ../src/main-win-ui.c:342
 msgid "_Connect to Server..."
 msgstr ""
 
-#: ../src/main-win-ui.c:336
+#: ../src/main-win-ui.c:342
 msgid "Open a window to choose remote folder location"
 msgstr ""
 
-#: ../src/main-win-ui.c:337
+#: ../src/main-win-ui.c:343
 msgid "Go to the path in the location bar"
 msgstr ""
 
-#: ../src/main-win-ui.c:338
+#: ../src/main-win-ui.c:344
 msgid "_Bookmarks"
 msgstr "_Bookmarks"
 
-#: ../src/main-win-ui.c:339
+#: ../src/main-win-ui.c:345
 #, fuzzy
 msgid "_Add to Bookmarks..."
 msgstr "Add to Bookmarks"
 
-#: ../src/main-win-ui.c:339
+#: ../src/main-win-ui.c:345
 msgid "Add current folder to bookmarks list"
 msgstr ""
 
-#: ../src/main-win-ui.c:340
+#: ../src/main-win-ui.c:346
 msgid "Too_ls"
 msgstr ""
 
-#: ../src/main-win-ui.c:341
+#: ../src/main-win-ui.c:347
 msgid "Open Current Folder in _Terminal"
 msgstr "Open Current Folder in _Terminal"
 
-#: ../src/main-win-ui.c:343
+#: ../src/main-win-ui.c:349
 #, fuzzy
 msgid "Fin_d Files..."
 msgstr "Fin_d Files"
 
-#: ../src/main-win-ui.c:343
+#: ../src/main-win-ui.c:349
 #, fuzzy
 msgid "Open search dialog"
 msgstr "Open desktop preference dialogue"
 
-#: ../src/main-win-ui.c:346
+#: ../src/main-win-ui.c:352
 msgid "_Run a Command in Current Folder..."
 msgstr "_Run Command in Current Folder..."
 
 #. Note to translators: "Mingle..." means "Do not put folders before files" but make the translation as short as possible, please!
-#: ../src/main-win-ui.c:364
+#: ../src/main-win-ui.c:370
 msgid "Mingle _Files and Folders"
 msgstr ""
 
-#: ../src/main-win-ui.c:367
+#: ../src/main-win-ui.c:373
 msgid "_Ignore Name Case"
 msgstr ""
 
-#: ../src/main-win-ui.c:369
+#: ../src/main-win-ui.c:375
 msgid "Sho_w Hidden"
 msgstr "Sho_w Hidden Files"
 
+#: ../src/main-win-ui.c:376
+msgid "Show Thum_bnails"
+msgstr "Show Thum_bnails"
+
 #. Note to translators: this save is meant for folder's settings such as sort
-#: ../src/main-win-ui.c:371
+#: ../src/main-win-ui.c:378
 msgid "Preserve This Folder's Settings"
 msgstr ""
 
-#: ../src/main-win-ui.c:372
+#: ../src/main-win-ui.c:379
 msgid ""
 "Check to remember view and sort as folder setting rather than global one"
 msgstr ""
 
-#: ../src/main-win-ui.c:374
+#: ../src/main-win-ui.c:381
 msgid "_Show Toolbar"
 msgstr ""
 
-#: ../src/main-win-ui.c:375
+#: ../src/main-win-ui.c:382
 msgid "Show 'New _Window' Button"
 msgstr ""
 
-#: ../src/main-win-ui.c:376
+#: ../src/main-win-ui.c:383
 msgid "Show 'New _Tab' Button"
 msgstr ""
 
-#: ../src/main-win-ui.c:377
+#: ../src/main-win-ui.c:384
 msgid "Show _Navigation Buttons"
 msgstr ""
 
-#: ../src/main-win-ui.c:378
+#: ../src/main-win-ui.c:385
 msgid "Show '_Home' Button"
 msgstr ""
 
-#: ../src/main-win-ui.c:379
+#: ../src/main-win-ui.c:386
 msgid "Sho_w Side Pane"
 msgstr "Sho_w Side Pane"
 
-#: ../src/main-win-ui.c:380
+#: ../src/main-win-ui.c:387
 msgid "Show Status B_ar"
 msgstr "Show Status B_ar"
 
-#: ../src/main-win-ui.c:381
+#: ../src/main-win-ui.c:388
 #, fuzzy
 msgid "_Dual Pane Mode"
 msgstr "T_win Pane Mode"
 
-#: ../src/main-win-ui.c:381
+#: ../src/main-win-ui.c:388
 msgid "Show two panels with folder views"
 msgstr ""
 
-#: ../src/main-win-ui.c:382
+#: ../src/main-win-ui.c:389
 msgid "Fullscreen _Mode"
 msgstr "Fullscreen _Mode"
 
-#: ../src/main-win-ui.c:388
+#: ../src/main-win-ui.c:395 ../src/main-win-ui.c:443
 msgid "_Icon View"
 msgstr "_Icon View"
 
-#: ../src/main-win-ui.c:389
+#: ../src/main-win-ui.c:396
 msgid "_Compact View"
 msgstr "_Compact View"
 
-#: ../src/main-win-ui.c:390
+#: ../src/main-win-ui.c:397
 msgid "_Thumbnail View"
 msgstr "_Thumbnail View"
 
-#: ../src/main-win-ui.c:391
+#: ../src/main-win-ui.c:398
 msgid "Detailed _List View"
 msgstr "Detailed _List View"
 
-#: ../src/main-win-ui.c:404 ../src/main-win-ui.c:412
+#: ../src/main-win-ui.c:411 ../src/main-win-ui.c:419
 msgid "By _Name"
 msgstr "By _Name"
 
-#: ../src/main-win-ui.c:405 ../src/main-win-ui.c:413
+#: ../src/main-win-ui.c:412 ../src/main-win-ui.c:420
 msgid "By _Modification Time"
 msgstr "By _Modification Time"
 
-#: ../src/main-win-ui.c:406 ../src/main-win-ui.c:414
+#: ../src/main-win-ui.c:413 ../src/main-win-ui.c:421
 msgid "By _Size"
 msgstr "By _Size"
 
-#: ../src/main-win-ui.c:407 ../src/main-win-ui.c:415
+#: ../src/main-win-ui.c:414 ../src/main-win-ui.c:422
 msgid "By File _Type"
 msgstr "By File _Type"
 
-#: ../src/main-win-ui.c:409
+#: ../src/main-win-ui.c:416
 msgid "By _Extension"
 msgstr ""
 
-#: ../src/main-win-ui.c:422
+#: ../src/main-win-ui.c:429
 msgid "Places"
 msgstr "Places"
 
-#: ../src/main-win-ui.c:423
+#: ../src/main-win-ui.c:430
 msgid "Directory Tree"
 msgstr "Directory Tree"
 
-#: ../src/main-win-ui.c:424
+#: ../src/main-win-ui.c:431
 msgid "Remote"
 msgstr "Remote"
 
-#: ../src/main-win-ui.c:430
+#: ../src/main-win-ui.c:437
 #, fuzzy
 msgid "_Location"
 msgstr "App_lications"
 
-#: ../src/main-win-ui.c:431
+#: ../src/main-win-ui.c:438
 msgid "_Buttons"
 msgstr ""
 
-#: ../src/main-win.c:1013 ../src/main-win.c:1017
+#: ../src/main-win-ui.c:444
+msgid "_List View"
+msgstr "_List View"
+
+#: ../src/main-win.c:1017 ../src/main-win.c:1021
 msgid "Show history of visited folders"
 msgstr ""
 
-#: ../src/main-win.c:1022
+#: ../src/main-win.c:1026
 msgid "History"
 msgstr ""
 
-#: ../src/main-win.c:1034
-msgid "View as thumbnails"
-msgstr "View as thumbnails"
-
-#: ../src/main-win.c:1042
+#: ../src/main-win.c:1038
 msgid "View as icons"
 msgstr "View as icons"
 
-#: ../src/main-win.c:1050
-msgid "View as small icons"
-msgstr "View as small icons"
-
-#: ../src/main-win.c:1058
+#: ../src/main-win.c:1046
 msgid "View as detailed list"
 msgstr "View as detailed list"
 
-#: ../src/main-win.c:1079
+#: ../src/main-win.c:1067
 msgid "You are in super user mode"
 msgstr "You are in Super User mode"
 
-#: ../src/main-win.c:1274
+#: ../src/main-win.c:1262
 #, fuzzy
 msgid "Lightweight file manager\n"
 msgstr ""
@@ -1168,12 +1176,12 @@ msgstr ""
 "\n"
 "Developed by Hon Jen Yee (PCMan)"
 
-#: ../src/main-win.c:1284
+#: ../src/main-win.c:1272
 #, c-format
 msgid "using LibFM ver. %s\n"
 msgstr ""
 
-#: ../src/main-win.c:1286
+#: ../src/main-win.c:1274
 #, fuzzy
 msgid ""
 "\n"
@@ -1183,12 +1191,12 @@ msgstr ""
 "\n"
 "Developed by Hon Jen Yee (PCMan)"
 
-#: ../src/main-win.c:1311 ../src/main-win.c:1319
+#: ../src/main-win.c:1299 ../src/main-win.c:1307
 #, fuzzy
 msgid "Keyboard Navigation"
 msgstr "Keyboard navigation"
 
-#: ../src/main-win.c:1313
+#: ../src/main-win.c:1301
 msgid ""
 "Tab: cycle focus Folder View -> Side Pane -> Tools Bar\n"
 "Shift+Tab: cycle focus Tools Bar -> Side Pane -> Folder View\n"
@@ -1204,20 +1212,20 @@ msgstr ""
 "F10: activate main menu\n"
 "Ctrl+L or Alt+D: jump focus to Path Bar"
 
-#: ../src/main-win.c:1358
+#: ../src/main-win.c:1346
 msgid "Run a command"
 msgstr ""
 
-#: ../src/main-win.c:1359
+#: ../src/main-win.c:1347
 msgid "Enter a command to run:"
 msgstr ""
 
-#: ../src/main-win.c:1366
+#: ../src/main-win.c:1354
 #, fuzzy
 msgid "Current folder is inaccessible"
 msgstr "Open Current Folder in _Terminal"
 
-#: ../src/main-win.c:2092
+#: ../src/main-win.c:2100
 #, c-format
 msgid ""
 "Add following folder to bookmarks:\n"
@@ -1228,111 +1236,111 @@ msgstr ""
 "'%s'\n"
 "Enter a name for the new bookmark item:"
 
-#: ../src/main-win.c:2096
+#: ../src/main-win.c:2104
 msgid "Add to Bookmarks"
 msgstr "Add to Bookmarks"
 
-#: ../src/main-win.c:2872
+#: ../src/main-win.c:2885
 msgid "Select filter"
 msgstr ""
 
-#: ../src/main-win.c:2873
+#: ../src/main-win.c:2886
 msgid "Choose a new shell pattern to show files:"
 msgstr ""
 
 #. options only acceptable by first pcmanfm instance. These options are not passed through IPC
-#: ../src/pcmanfm.c:79
+#: ../src/pcmanfm.c:80
 msgid "Name of configuration profile"
 msgstr "Name of configuration profile"
 
-#: ../src/pcmanfm.c:79
+#: ../src/pcmanfm.c:80
 msgid "PROFILE"
 msgstr "PROFILE"
 
-#: ../src/pcmanfm.c:80
+#: ../src/pcmanfm.c:81
 msgid "Run PCManFM as a daemon"
 msgstr "Run PCManFM as a daemon"
 
-#: ../src/pcmanfm.c:81
+#: ../src/pcmanfm.c:82
 msgid "No function. Just to be compatible with nautilus"
 msgstr "No function. Just to be compatible with nautilus"
 
 #. options that are acceptable for every instance of pcmanfm and will be passed through IPC.
-#: ../src/pcmanfm.c:84
+#: ../src/pcmanfm.c:85
 msgid "Launch desktop manager"
 msgstr "Launch desktop manager"
 
-#: ../src/pcmanfm.c:85
+#: ../src/pcmanfm.c:86
 msgid "Turn off desktop manager if it's running"
 msgstr "Turn off desktop manager if it‘s running"
 
-#: ../src/pcmanfm.c:86
+#: ../src/pcmanfm.c:87
 msgid "Open desktop preference dialog"
 msgstr "Open desktop preference dialogue"
 
-#: ../src/pcmanfm.c:87
+#: ../src/pcmanfm.c:88
 msgid "Reload desktop config file"
 msgstr "Reload desktop config file"
 
-#: ../src/pcmanfm.c:88
+#: ../src/pcmanfm.c:89
 msgid "Use --desktop option only for one screen"
 msgstr "Use --desktop option only for one screen"
 
-#: ../src/pcmanfm.c:89
+#: ../src/pcmanfm.c:90
 msgid "Set desktop wallpaper from image FILE"
 msgstr "Set desktop wallpaper from image FILE"
 
-#: ../src/pcmanfm.c:89
+#: ../src/pcmanfm.c:90
 msgid "FILE"
 msgstr "FILE"
 
 #. don't translate list of modes in description, please
-#: ../src/pcmanfm.c:91
+#: ../src/pcmanfm.c:92
 #, fuzzy
 msgid ""
 "Set mode of desktop wallpaper. MODE=(color|stretch|fit|crop|center|tile|"
 "screen)"
 msgstr "Set mode of desktop wallpaper. MODE=(color|stretch|fit|center|tile)"
 
-#: ../src/pcmanfm.c:91
+#: ../src/pcmanfm.c:92
 msgid "MODE"
 msgstr "MODE"
 
-#: ../src/pcmanfm.c:92
+#: ../src/pcmanfm.c:93
 msgid "Open Preferences dialog on the page N"
 msgstr "Open Preferences dialogue on the page N"
 
-#: ../src/pcmanfm.c:92
+#: ../src/pcmanfm.c:93
 msgid "N"
 msgstr "N"
 
-#: ../src/pcmanfm.c:93
+#: ../src/pcmanfm.c:94
 msgid "Open new window"
 msgstr "Open new window"
 
-#: ../src/pcmanfm.c:95
+#: ../src/pcmanfm.c:96
 #, fuzzy
 msgid "Open a Find Files window"
 msgstr "Open Find Files utility"
 
-#: ../src/pcmanfm.c:97
+#: ../src/pcmanfm.c:98
 msgid "Window role for usage by window manager"
 msgstr "Window role for usage by window manager"
 
-#: ../src/pcmanfm.c:97
+#: ../src/pcmanfm.c:98
 msgid "ROLE"
 msgstr "ROLE"
 
-#: ../src/pcmanfm.c:98
+#: ../src/pcmanfm.c:99
 msgid "[FILE1, FILE2,...]"
 msgstr "[FILE1, FILE2,...]"
 
 #. FIXME: add "on this X screen/monitor" into diagnostics
-#: ../src/pcmanfm.c:384
+#: ../src/pcmanfm.c:388
 msgid "Desktop manager is not active."
 msgstr ""
 
-#: ../src/pcmanfm.c:670
+#: ../src/pcmanfm.c:674
 msgid "Terminal emulator is not set."
 msgstr "Terminal emulator is not set."
 

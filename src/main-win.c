@@ -114,7 +114,7 @@ static void on_toolbar_nav(GtkToggleAction *act, FmMainWin *win);
 static void on_toolbar_home(GtkToggleAction *act, FmMainWin *win);
 static void on_show_status(GtkToggleAction *action, FmMainWin *win);
 static void on_change_mode(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
-static void on_change_mode_cutdown(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
+static void on_change_mode_cutdown (GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
 static void on_change_mode_icon (GtkRadioToolButton *btn, FmMainWin* win);
 static void on_change_mode_detailed (GtkRadioToolButton *btn, FmMainWin* win);
 static void on_sort_by(GtkRadioAction* act, GtkRadioAction *cur, FmMainWin* win);
@@ -1491,13 +1491,13 @@ static void on_change_mode_cutdown (GtkRadioAction* act, GtkRadioAction *cur, Fm
         case FM_FV_LIST_VIEW :          item = gtk_toolbar_get_nth_item (win->toolbar, VIEW_TAB_LOC + 1 + (geteuid () ? 0 : 2));
                                         break;
     }
-    if (item && !gtk_toggle_tool_button_get_active (item))
+    if (item && !gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (item)))
         gtk_toggle_tool_button_set_active (GTK_TOGGLE_TOOL_BUTTON (item), TRUE);
 }
 
 static void on_change_mode_icon (GtkRadioToolButton *btn, FmMainWin *win)
 {
-    if (!gtk_toggle_tool_button_get_active (btn)) return;
+    if (!gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (btn))) return;
     new_mode (win, FM_FV_ICON_OR_THUMB_VIEW);
     GtkAction *mact = gtk_ui_manager_get_action (win->ui, "/menubar/ViewMenu/TogIconView");
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (mact), TRUE);
@@ -1505,7 +1505,7 @@ static void on_change_mode_icon (GtkRadioToolButton *btn, FmMainWin *win)
 
 static void on_change_mode_detailed (GtkRadioToolButton *btn, FmMainWin *win)
 {
-    if (!gtk_toggle_tool_button_get_active (btn)) return;
+    if (!gtk_toggle_tool_button_get_active (GTK_TOGGLE_TOOL_BUTTON (btn))) return;
     new_mode (win, FM_FV_LIST_VIEW);
     GtkAction *mact = gtk_ui_manager_get_action (win->ui, "/menubar/ViewMenu/TogListView");
     gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (mact), TRUE);
