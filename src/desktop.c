@@ -2386,7 +2386,11 @@ static void update_background(FmDesktop* desktop, int is_it)
 
     if (!desktop->conf.wallpaper_common)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        guint32 cur_desktop = desktop->monitor;
+#else
         guint32 cur_desktop = desktop->cur_desktop;
+#endif
 
         if(is_it >= 0) /* signal "changed::wallpaper" */
         {
@@ -2541,6 +2545,7 @@ static void update_background(FmDesktop* desktop, int is_it)
             gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
             {
+                // it may be necessary to change these to geom.width and .height respectively
                 dest_w = gdk_screen_get_width(screen);
                 dest_h = gdk_screen_get_height(screen);
                 x = -geom.x;
@@ -3529,6 +3534,12 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
     PangoContext* pc;
     PangoFontMetrics *metrics;
     int font_h, font_w;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkAllocation geom;
+    gdk_screen_get_monitor_geometry(gtk_widget_get_screen(w), self->monitor, &geom);
+    gtk_widget_set_size_request (w, geom.width, geom.height);
+#endif
 
     pc = gtk_widget_get_pango_context((GtkWidget*)self);
 
