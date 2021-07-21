@@ -2387,7 +2387,7 @@ static void update_background(FmDesktop* desktop, int is_it)
     if (!desktop->conf.wallpaper_common)
     {
 #if GTK_CHECK_VERSION(3, 0, 0)
-        guint32 cur_desktop = desktop->monitor;
+        guint32 cur_desktop = gdk_mon_num_for_desktop (desktop);
 #else
         guint32 cur_desktop = desktop->cur_desktop;
 #endif
@@ -2781,9 +2781,9 @@ static void update_working_area(FmDesktop* desktop)
     GdkScreen* screen = gtk_widget_get_screen((GtkWidget*)desktop);
     GdkRectangle geom;
 #if GTK_CHECK_VERSION(3, 4, 0)
-    gdk_screen_get_monitor_workarea(screen, desktop->monitor, &desktop->working_area);
+    gdk_screen_get_monitor_workarea(screen, gdk_mon_num_for_desktop (desktop), &desktop->working_area);
     /* we need working area coordinates within the monitor not the screen */
-    gdk_screen_get_monitor_geometry(screen, desktop->monitor, &geom);
+    gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
     desktop->working_area.x -= geom.x;
     desktop->working_area.y -= geom.y;
 #else
@@ -2885,6 +2885,9 @@ static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointe
             update_working_area(self);
         else if(evt->atom == XA_NET_CURRENT_DESKTOP)
         {
+#if GTK_CHECK_VERSION(3, 0, 0)
+            if(!self->conf.wallpaper_common) update_background(self, -1);
+#else
             gint desktop = get_desktop_for_root_window(gdk_screen_get_root_window(
                                     gtk_widget_get_screen(GTK_WIDGET(data))));
             if(desktop >= 0)
@@ -2893,6 +2896,7 @@ static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointe
                 if(!self->conf.wallpaper_common)
                     update_background(self, -1);
             }
+#endif
         }
     }
     return GDK_FILTER_CONTINUE;
@@ -2909,7 +2913,7 @@ static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
             if (desktops[i] == desktop)
                 break;
         if (i < n_screens)
-            desktops[i] = fm_desktop_new(screen, desktop->monitor ? -2 : -1);
+            desktops[i] = fm_desktop_new(screen, gdk_mon_num_for_desktop (desktop) ? -2 : -1);
         gtk_widget_destroy(GTK_WIDGET(desktop));
         return;
     }
@@ -3537,7 +3541,7 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkAllocation geom;
-    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), self->monitor, &geom);
+    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), gdk_mon_num_for_desktop (self), &geom);
     gtk_widget_set_size_request (w, geom.width, geom.height);
 #endif
 
@@ -3599,19 +3603,15 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void on_get_preferred_width(GtkWidget *w, gint *minimal_width, gint *natural_width)
 {
-    GdkScreen* scr = gtk_widget_get_screen(w);
-    gint monitor = FM_DESKTOP(w)->monitor;
     GdkRectangle geom;
-    gdk_screen_get_monitor_geometry(scr, monitor, &geom);
+    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), gdk_mon_num_for_desktop (FM_DESKTOP (w)), &geom);
     *minimal_width = *natural_width = geom.width;
 }
 
 static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *natural_height)
 {
-    GdkScreen* scr = gtk_widget_get_screen(w);
-    gint monitor = FM_DESKTOP(w)->monitor;
     GdkRectangle geom;
-    gdk_screen_get_monitor_geometry(scr, monitor, &geom);
+    gdk_screen_get_monitor_geometry (gtk_widget_get_screen(w), gdk_mon_num_for_desktop (FM_DESKTOP (w)), &geom);
     *minimal_height = *natural_height = geom.height;
 }
 #else
@@ -5306,10 +5306,14 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     gdk_window_add_filter(root, on_root_event, self);
     g_signal_connect(screen, "monitors-changed", G_CALLBACK(on_screen_size_changed), self);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    self->cur_desktop = self->monitor;
+#else
     n = get_desktop_for_root_window(root);
     if(n < 0)
         n = 0;
     self->cur_desktop = (guint)n;
+#endif
 
     /* init dnd support */
     self->dnd_src = fm_dnd_src_new((GtkWidget*)self);
