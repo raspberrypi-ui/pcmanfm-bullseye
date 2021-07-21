@@ -2534,18 +2534,19 @@ static void update_background(FmDesktop* desktop, int is_it)
         int x = 0, y = 0;
         src_w = gdk_pixbuf_get_width(pix);
         src_h = gdk_pixbuf_get_height(pix);
+#if !GTK_CHECK_VERSION(3, 0, 0)
         if(desktop->conf.wallpaper_mode == FM_WP_TILE)
         {
             dest_w = src_w;
             dest_h = src_h;
         }
         else
+#endif
         {
             GdkRectangle geom;
             gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
             {
-                // it may be necessary to change these to geom.width and .height respectively
                 dest_w = gdk_screen_get_width(screen);
                 dest_h = gdk_screen_get_height(screen);
                 x = -geom.x;
@@ -2618,6 +2619,10 @@ static void update_background(FmDesktop* desktop, int is_it)
         case FM_WP_COLOR: ; /* handled above */
         }
         gdk_cairo_set_source_pixbuf(cr, pix, x, y);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        if (desktop->conf.wallpaper_mode == FM_WP_TILE)
+            cairo_pattern_set_extend (cairo_get_source (cr), CAIRO_EXTEND_REPEAT);
+#endif
         cairo_paint(cr);
         cairo_destroy(cr);
         cache->wallpaper_mode = desktop->conf.wallpaper_mode;
