@@ -3537,7 +3537,7 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkAllocation geom;
-    gdk_screen_get_monitor_geometry(gtk_widget_get_screen(w), self->monitor, &geom);
+    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), self->monitor, &geom);
     gtk_widget_set_size_request (w, geom.width, geom.height);
 #endif
 
@@ -3589,7 +3589,11 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
             update_background(self, -1);
     }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GTK_WIDGET_CLASS (fm_desktop_parent_class)->size_allocate (w, &geom);
+#else
     GTK_WIDGET_CLASS(fm_desktop_parent_class)->size_allocate(w, alloc);
+#endif
 }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
