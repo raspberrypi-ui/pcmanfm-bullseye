@@ -607,15 +607,17 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
         }
     }
     fm_key_file_get_bool(kf, group, "wallpaper_common", &cfg->wallpaper_common);
-
-    tmp = g_key_file_get_string(kf, group, "wallpaper", NULL);
-    if (tmp && tmp[0] == '\0') /* ignore empty string */
+    if (cfg->wallpaper_common)
     {
-        g_free(tmp);
-        tmp = NULL;
+        tmp = g_key_file_get_string(kf, group, "wallpaper", NULL);
+        if (tmp && tmp[0] == '\0') /* ignore empty string */
+        {
+            g_free(tmp);
+            tmp = NULL;
+        }
+        g_free(cfg->wallpaper);
+        cfg->wallpaper = tmp;
     }
-    g_free(cfg->wallpaper);
-    cfg->wallpaper = tmp;
 
     tmp = g_key_file_get_string(kf, group, "desktop_bg", NULL);
     if(tmp)
