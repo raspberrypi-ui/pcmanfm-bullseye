@@ -181,6 +181,12 @@ static GSList *mounts = NULL;
 #endif
 
 
+gboolean is_wizard (void)
+{
+    if (!g_strcmp0 (getenv ("USER"), "wiz")) return TRUE;
+    return FALSE;
+}
+
 /* Monitor number remapping
  * ========================
  *
@@ -370,7 +376,7 @@ static char* get_config_file(FmDesktop* desktop, gboolean create_dir)
         return NULL;
     if (app_config->common_bg) i = 0;
     dir = pcmanfm_get_profile_dir(create_dir);
-    path = g_strdup_printf("%s/desktop-items-%u.conf", dir, i);
+    path = g_strdup_printf(is_wizard () ? "%s/wizard-items-%u.conf" : "%s/desktop-items-%u.conf", dir, i);
     g_free(dir);
     return path;
 }
@@ -387,7 +393,7 @@ static char* get_sys_config_file (FmDesktop* desktop)
         return NULL;
     if (app_config->common_bg) i = 0;
     dir = pcmanfm_get_system_profile_dir ();
-    path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
+    path = g_strdup_printf (is_wizard () ? "%s/wizard-items-%u.conf" : "%s/desktop-items-%u.conf", dir, i);
     g_free (dir);
     return path;
 }
@@ -3653,6 +3659,8 @@ static gboolean on_button_press(GtkWidget* w, GdkEventButton* evt)
     GtkTreeIter it;
     FmFolderViewClickType clicked = FM_FV_CLICK_NONE;
     gboolean in_text;
+
+    if (is_wizard ()) return TRUE;
 
     if (ren_timer)
     {
