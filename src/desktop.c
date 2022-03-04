@@ -183,7 +183,7 @@ static GSList *mounts = NULL;
 
 gboolean is_wizard (void)
 {
-    if (!g_strcmp0 (getenv ("USER"), "wiz")) return TRUE;
+    if (!g_strcmp0 (getenv ("USER"), "rpi-first-boot-wizard")) return TRUE;
     return FALSE;
 }
 
