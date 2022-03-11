@@ -4976,6 +4976,14 @@ static void on_drag_begin (GtkWidget *widget, GdkDragContext *drag_context)
     queue_layout_items(desktop);
 }
 
+static void on_drag_end (GtkWidget *widget, GdkDragContext *drag_context)
+{
+    FmDesktop *desktop = FM_DESKTOP (widget);
+
+    desktop->dragging = FALSE;
+    queue_layout_items (desktop);
+}
+
 static void on_dnd_src_data_get(FmDndSrc* ds, FmDesktop* desktop)
 {
     FmFileInfoList* files = _dup_selected_files(FM_FOLDER_VIEW(desktop));
@@ -5420,6 +5428,7 @@ static void fm_desktop_class_init(FmDesktopClass *klass)
     widget_class->drag_leave = on_drag_leave;
 #if FM_CHECK_VERSION(1, 2, 1)
     widget_class->drag_begin = on_drag_begin;
+    widget_class->drag_end = on_drag_end;
 #endif
     /* widget_class->drag_data_get = on_drag_data_get; */
 
