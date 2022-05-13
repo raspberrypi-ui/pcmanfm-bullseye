@@ -926,11 +926,44 @@ static void _free_extra_item(FmDesktopExtraItem *item)
     g_slice_free(FmDesktopExtraItem, item);
 }
 
+static void log_mount_event (GMount *mount, gboolean added)
+{
+    GDrive *drv = g_mount_get_drive (mount);
+    GFile *rt = g_mount_get_root (mount);
+
+    FILE *fp = fopen ("/tmp/pcman.log", "ab+");
+    time_t ltime = time (NULL);
+    char *mpath, *dname, *did;
+    if (drv)
+    {
+        dname = g_drive_get_name (drv);
+        did = g_drive_get_identifier (drv, G_DRIVE_IDENTIFIER_KIND_UNIX_DEVICE);
+    }
+    else
+    {
+        dname = g_strdup_printf ("no_drive");
+        did = g_strdup_printf ("no_drive_id");
+    }
+    if (rt) mpath = g_file_get_path (rt);
+    else mpath = g_strdup_printf ("no_mount");
+
+    fprintf (fp, "%s\t%s\t%s\t%s\t%s", added ? "mount" : "unmount", mpath, did, dname, asctime (localtime (&ltime)));
+    fclose (fp);
+
+    g_free (dname);
+    g_free (did);
+    g_free (mpath);
+    g_object_unref (drv);
+    g_object_unref (rt);
+}
+
 static void on_mount_added(GVolumeMonitor *volume_monitor, GMount *mount,
                            gpointer _unused)
 {
     GFile *file;
     FmDesktopExtraItem *item;
+
+    log_mount_event (mount, TRUE);
 
     /* get file info for the mount point */
     item = g_slice_new(FmDesktopExtraItem);
@@ -983,6 +1016,8 @@ static gboolean on_idle_extra_item_remove(gpointer user_data)
 static void on_mount_removed(GVolumeMonitor *volume_monitor, GMount *mount,
                              gpointer _unused)
 {
+    log_mount_event (mount, FALSE);
+
     gdk_threads_add_idle(on_idle_extra_item_remove, g_object_ref(mount));
 }
 
