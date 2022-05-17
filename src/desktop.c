@@ -949,6 +949,37 @@ static void on_mount_added(GVolumeMonitor *volume_monitor, GMount *mount,
     }
 }
 
+static gboolean on_fallback_remove (gpointer user_data)
+{
+    GMount *mount = user_data;
+    GSList *sl;
+    FmDesktopExtraItem *item;
+    int i;
+
+    g_warning ("retrying remove mount");
+
+    for (sl = mounts; sl; sl = sl->next)
+    {
+        item = sl->data;
+        if (item->mount == mount) break;
+    }
+
+    if (sl)
+    {
+        g_warning ("mount found on retry - removing");
+        for (i = 0; i < n_screens; i++)
+        {
+            if (gdk_mon_num (i) >= 0 && desktops[i]->conf.show_mounts && desktops[i]->model)
+                fm_folder_model_extra_file_remove (desktops[i]->model, item->fi);
+        }
+        mounts = g_slist_delete_link (mounts, sl);
+        _free_extra_item (item);
+    }
+
+    g_object_unref (mount);
+    return FALSE;
+}
+
 static gboolean on_idle_extra_item_remove(gpointer user_data)
 {
     GMount *mount = user_data;
@@ -973,8 +1004,9 @@ static gboolean on_idle_extra_item_remove(gpointer user_data)
     }
     else
     {
-        g_warning("got unmount for unknown desktop item");
-        return TRUE;
+        g_warning("got unmount for unknown desktop item - retry in 5s");
+        g_timeout_add (5000, on_fallback_remove, mount);
+        return FALSE;
     }
     g_object_unref(mount);
     return FALSE;
