@@ -86,6 +86,8 @@ struct _FmBackgroundCache
     time_t mtime;
 };
 
+extern gboolean use_wayland;
+
 static void queue_layout_items(FmDesktop* desktop);
 static void redraw_item(FmDesktop* desktop, FmDesktopItem* item);
 
@@ -2381,8 +2383,9 @@ static void paint_rubber_banding_rect(FmDesktop* self, cairo_t* cr, GdkRectangle
 static void _free_cache_image(FmBackgroundCache *cache)
 {
 #if GTK_CHECK_VERSION(3, 0, 0)
-//    XFreePixmap(cairo_xlib_surface_get_display(cache->bg),
-//                cairo_xlib_surface_get_drawable(cache->bg));
+    if (!use_wayland)
+    XFreePixmap(cairo_xlib_surface_get_display(cache->bg),
+                cairo_xlib_surface_get_drawable(cache->bg));
     cairo_surface_destroy(cache->bg);
 #else
     g_object_unref(cache->bg);
@@ -2601,12 +2604,16 @@ static void update_background(FmDesktop* desktop, int is_it)
 #if GTK_CHECK_VERSION(3, 0, 0)
         xdisplay = GDK_WINDOW_XDISPLAY(root);
         /* this code is taken from libgnome-desktop */
-//        xpixmap = XCreatePixmap(xdisplay, RootWindow(xdisplay, screen_num),
-//                                dest_w, dest_h, DefaultDepth(xdisplay, screen_num));
-//        cache->bg = cairo_xlib_surface_create(xdisplay, xpixmap,
-//                                              GDK_VISUAL_XVISUAL(gdk_screen_get_system_visual(screen)),
-//                                              dest_w, dest_h);
-        cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
+        if (use_wayland)
+            cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
+        else
+        {
+        xpixmap = XCreatePixmap(xdisplay, RootWindow(xdisplay, screen_num),
+                                dest_w, dest_h, DefaultDepth(xdisplay, screen_num));
+        cache->bg = cairo_xlib_surface_create(xdisplay, xpixmap,
+                                              GDK_VISUAL_XVISUAL(gdk_screen_get_system_visual(screen)),
+                                              dest_w, dest_h);
+        }
         cr = cairo_create(cache->bg);
 #else
         cache->bg = gdk_pixmap_new(window, dest_w, dest_h, -1);
@@ -2676,7 +2683,8 @@ static void update_background(FmDesktop* desktop, int is_it)
     gdk_window_set_back_pixmap(window, cache->bg, FALSE);
 #endif
 
-#if 0
+    if (!use_wayland)
+    {
     /* set root map here */
     xdisplay = GDK_WINDOW_XDISPLAY(root);
     xroot = RootWindow(xdisplay, screen_num);
@@ -2729,7 +2737,7 @@ static void update_background(FmDesktop* desktop, int is_it)
 
     if(pix)
         g_object_unref(pix);
-#endif
+    }
 
     gdk_window_invalidate_rect(window, NULL, TRUE);
 }
@@ -5305,13 +5313,16 @@ static void fm_desktop_init(FmDesktop *self)
     g_object_unref(style);
 #endif
 
-    gtk_layer_init_for_window(&(self->parent));
-    gtk_layer_set_layer(&(self->parent), GTK_LAYER_SHELL_LAYER_BACKGROUND);
+    if (use_wayland)
+    {
+        gtk_layer_init_for_window(&(self->parent));
+        gtk_layer_set_layer(&(self->parent), GTK_LAYER_SHELL_LAYER_BACKGROUND);
 
-    gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
-    gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
-    gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
-    gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
+        gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
+        gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
+        gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
+        gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
+    }
 }
 
 /* we should have a constructor to handle parameters */
@@ -5477,7 +5488,8 @@ static void fm_desktop_class_init(FmDesktopClass *klass)
 #endif
     /* widget_class->drag_data_get = on_drag_data_get; */
 
-#if 0
+    if (!use_wayland)
+    {
     if(XInternAtoms(gdk_x11_get_default_xdisplay(), atom_names,
                     G_N_ELEMENTS(atom_names), False, atoms))
     {
@@ -5487,7 +5499,7 @@ static void fm_desktop_class_init(FmDesktopClass *klass)
         XA_XROOTMAP_ID = atoms[3];
         XA_XROOTPMAP_ID = atoms[4];
     }
-#endif
+    }
 
     object_class->constructor = fm_desktop_constructor;
     object_class->set_property = fm_desktop_set_property;

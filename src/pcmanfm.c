@@ -71,6 +71,7 @@ static gboolean find_files = FALSE;
 #endif
 static char* ipc_cwd = NULL;
 static char* window_role = NULL;
+gboolean use_wayland = FALSE;
 
 static int n_pcmanfm_ref = 0;
 
@@ -96,6 +97,7 @@ static GOptionEntry opt_entries[] =
     { "find-files", 'f', 0, G_OPTION_ARG_NONE, &find_files, N_("Open a Find Files window"), NULL },
 #endif
     { "role", '\0', 0, G_OPTION_ARG_STRING, &window_role, N_("Window role for usage by window manager"), N_("ROLE") },
+    { "wayland", '\0', 0, G_OPTION_ARG_NONE, &use_wayland, N_("Disable X code to run under Wayland"), NULL },
     {G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &files_to_open, NULL, N_("[FILE1, FILE2,...]")},
     { NULL }
 };
