@@ -539,6 +539,7 @@ void pcmanfm_unref()
 
 static void move_window_to_desktop(FmMainWin* win, FmDesktop* desktop)
 {
+    if (use_wayland) return;
     GdkScreen* screen = gtk_widget_get_screen(GTK_WIDGET(desktop));
     Atom atom;
     char* atom_name = "_NET_WM_DESKTOP";
