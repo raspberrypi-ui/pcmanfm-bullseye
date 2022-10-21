@@ -5317,6 +5317,7 @@ static void fm_desktop_init(FmDesktop *self)
     {
         gtk_layer_init_for_window(&(self->parent));
         gtk_layer_set_layer(&(self->parent), GTK_LAYER_SHELL_LAYER_BACKGROUND);
+        gtk_layer_set_keyboard_interactivity (&(self->parent), TRUE);
 
         gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
         gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
