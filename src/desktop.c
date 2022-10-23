@@ -4379,6 +4379,15 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
     /* allocate a new search window */
     desktop->search_window = gtk_window_new(GTK_WINDOW_POPUP);
     window = GTK_WINDOW(desktop->search_window);
+
+    if (use_wayland)
+    {
+        gtk_layer_init_for_window (window);
+        gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
+        gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
+        gtk_layer_set_keyboard_interactivity (window, TRUE);
+    }
+
     gtk_window_group_add_window(win_group, window);
     gtk_window_set_modal(window, TRUE);
     gtk_window_set_screen(window, gtk_widget_get_screen(GTK_WIDGET(desktop)));
