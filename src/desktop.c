@@ -4385,7 +4385,8 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
         gtk_layer_init_for_window (window);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
-        gtk_layer_set_keyboard_interactivity (window, TRUE);
+        gtk_layer_set_layer (window, GTK_LAYER_SHELL_LAYER_OVERLAY);
+        gtk_layer_set_keyboard_mode (window, GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
     }
 
     gtk_window_group_add_window(win_group, window);
@@ -5326,7 +5327,7 @@ static void fm_desktop_init(FmDesktop *self)
     {
         gtk_layer_init_for_window(&(self->parent));
         gtk_layer_set_layer(&(self->parent), GTK_LAYER_SHELL_LAYER_BACKGROUND);
-        gtk_layer_set_keyboard_interactivity (&(self->parent), TRUE);
+        gtk_layer_set_keyboard_mode (&(self->parent), GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
 
         gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
         gtk_layer_set_anchor(&(self->parent), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
