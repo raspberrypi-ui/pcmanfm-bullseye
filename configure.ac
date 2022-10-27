@@ -91,7 +91,7 @@ PKG_CHECK_MODULES(GIO, [$gio_modules])
 AC_SUBST(GIO_CFLAGS)
 AC_SUBST(GIO_LIBS)
 
-fm_modules="$gio_modules glib-2.0 pango >= 1.20.0 libfm >= 1.0 gtk-layer-shell-0"
+fm_modules="$gio_modules glib-2.0 pango >= 1.20.0 libfm >= 1.0 gtk-layer-shell-0 >= 0.6"
 case "$ac_with_gtk" in
     3|3.*)
         fm_modules="$fm_modules gtk+-3.0 libfm-gtk3 >= 1.0.1"
