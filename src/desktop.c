@@ -6341,6 +6341,7 @@ void fm_desktop_manager_init(gint on_screen)
         {
             gint mon_init = (on_screen < 0 || on_screen == (int)scr) ? (int)mon : (mon ? -2 : -1);
             FmDesktop *desktop = fm_desktop_new(screen, mon_init);
+            gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
             GtkWidget *widget = GTK_WIDGET(desktop);
             FmFolder *desktop_folder;
 
