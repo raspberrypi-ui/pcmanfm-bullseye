@@ -2600,6 +2600,7 @@ static void update_background(FmDesktop* desktop, int is_it)
                 dest_w = geom.width;
                 dest_h = geom.height;
             }
+            if (!dest_w || !dest_h) return;   // no monitor info yet; give up....
         }
 #if GTK_CHECK_VERSION(3, 0, 0)
         xdisplay = GDK_WINDOW_XDISPLAY(root);
