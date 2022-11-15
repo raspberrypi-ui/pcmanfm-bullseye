@@ -277,6 +277,9 @@ int main(int argc, char** argv)
     fm_app_config_load_from_profile(FM_APP_CONFIG(config), profile);
     g_signal_connect(config, "changed::saved_search", G_CALLBACK(on_config_changed), NULL);
 
+    g_signal_connect (gdk_display_get_default (), "monitor-added", G_CALLBACK (monitors_changed), NULL);
+    g_signal_connect (gdk_display_get_default (), "monitor-removed", G_CALLBACK (monitors_changed), NULL);
+
     /* the main part */
     if(pcmanfm_run(gdk_screen_get_number(gdk_screen_get_default())))
     {

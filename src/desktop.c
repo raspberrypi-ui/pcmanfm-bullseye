@@ -6341,7 +6341,7 @@ void fm_desktop_manager_init(gint on_screen)
         {
             gint mon_init = (on_screen < 0 || on_screen == (int)scr) ? (int)mon : (mon ? -2 : -1);
             FmDesktop *desktop = fm_desktop_new(screen, mon_init);
-            gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
+            if (use_wayland) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
             GtkWidget *widget = GTK_WIDGET(desktop);
             FmFolder *desktop_folder;
 
@@ -6498,4 +6498,106 @@ void fm_desktop_wallpaper_changed(FmDesktop *desktop)
 {
     queue_config_save(desktop);
     update_background(desktop, 0);
+}
+
+void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data)
+{
+    GdkDisplay *gdpy = gdk_display_get_default ();
+    int n_scr = gdk_display_get_n_screens (gdpy);
+    int scr, mon, dsk;
+
+    // tear down existing desktops
+    for (mon = 0; mon < n_screens; mon++)
+    {
+        gtk_widget_destroy (GTK_WIDGET (desktops[mon]));
+    }
+    g_free (desktops);
+
+    // delete all existing desktop items
+    if (documents)
+    {
+        _free_extra_item (documents);
+        documents = NULL;
+    }
+    if (trash_can)
+    {
+        g_signal_handlers_disconnect_by_func (trash_monitor, on_trash_changed, trash_can);
+        g_object_unref (trash_monitor);
+        _free_extra_item (trash_can);
+        trash_can = NULL;
+    }
+    while (mounts)
+    {
+        _free_extra_item (mounts->data);
+        mounts = g_slist_delete_link (mounts, mounts);
+    }
+
+    // find new number of monitors
+    n_screens = 0;
+    for (scr = 0; scr < n_scr; scr++)
+        n_screens += gdk_screen_get_n_monitors (gdk_display_get_screen (gdpy, scr));
+
+    // create new desktops
+    desktops = g_new (FmDesktop*, n_screens);
+    dsk = 0;
+
+    // loop through all monitors, creating a desktop for each
+    for (scr = 0; scr < n_scr; scr++)
+    {
+        GdkScreen *screen = gdk_display_get_screen (gdpy, scr);
+        for (mon = 0; mon < gdk_screen_get_n_monitors (screen); mon++)
+        {
+            FmFolder *desktop_folder;
+            FmDesktop *desktop = fm_desktop_new (screen, mon);
+            if (use_wayland) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
+
+            desktops[x_mon_num (dsk++)] = desktop;
+            gtk_widget_realize (GTK_WIDGET (desktop));
+            if (desktop->conf.folder)
+            {
+                if (desktop->conf.folder[0]) desktop_folder = fm_folder_from_path_name (desktop->conf.folder);
+                else desktop_folder = NULL;
+            }
+            else desktop_folder = fm_folder_from_path (fm_path_get_desktop ());
+
+            if (desktop_folder)
+            {
+                connect_model (desktop, desktop_folder);
+                g_object_unref (desktop_folder);
+            }
+            else fm_folder_view_add_popup (FM_FOLDER_VIEW (desktop), GTK_WINDOW (desktop), fm_desktop_update_popup);
+
+            if (desktop->model)
+                fm_folder_model_set_sort (desktop->model, desktop->conf.desktop_sort_by, desktop->conf.desktop_sort_type);
+
+            gtk_widget_show_all (GTK_WIDGET (desktop));
+            gdk_window_lower (gtk_widget_get_window (GTK_WIDGET (desktop)));
+        }
+    }
+
+    // re-create desktop items
+    documents = _add_extra_item (g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
+
+    GFile *gf = fm_file_new_for_uri ("trash:///");
+    if (g_file_query_exists (gf, NULL))
+    {
+        trash_can = _add_extra_item ("trash:///");
+        trash_monitor = fm_monitor_directory (gf, NULL);
+        g_signal_connect (trash_monitor, "changed", G_CALLBACK (on_trash_changed), trash_can);
+    }
+    g_object_unref (gf);
+
+    if (vol_mon)
+    {
+        GList *ml = g_volume_monitor_get_mounts (vol_mon);
+        GList *l;
+
+        for (l = ml; l; l = l->next)
+        {
+            GMount *mount = G_MOUNT (l->data);
+            on_mount_added (vol_mon, mount, NULL);
+            g_object_unref (mount);
+        }
+        g_list_free (ml);
+    }
 }

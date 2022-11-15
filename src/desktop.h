@@ -115,6 +115,8 @@ void        fm_desktop_wallpaper_changed(FmDesktop *desktop);
 void fm_desktop_manager_init(gint on_screen);
 void fm_desktop_manager_finalize();
 
+void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data);
+
 G_END_DECLS
 
 #endif /* __DESKTOP_H__ */
