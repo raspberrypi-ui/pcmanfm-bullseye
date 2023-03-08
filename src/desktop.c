@@ -2603,12 +2603,12 @@ static void update_background(FmDesktop* desktop, int is_it)
             if (!dest_w || !dest_h) return;   // no monitor info yet; give up....
         }
 #if GTK_CHECK_VERSION(3, 0, 0)
-        xdisplay = GDK_WINDOW_XDISPLAY(root);
-        /* this code is taken from libgnome-desktop */
         if (use_wayland)
             cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
         else
         {
+        /* this code is taken from libgnome-desktop */
+        xdisplay = GDK_WINDOW_XDISPLAY(root);
         xpixmap = XCreatePixmap(xdisplay, RootWindow(xdisplay, screen_num),
                                 dest_w, dest_h, DefaultDepth(xdisplay, screen_num));
         cache->bg = cairo_xlib_surface_create(xdisplay, xpixmap,
@@ -4687,7 +4687,6 @@ static void on_realize(GtkWidget* w)
     gtk_window_set_skip_pager_hint(GTK_WINDOW(w), TRUE);
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(w), TRUE);
     gtk_window_set_resizable((GtkWindow*)w, FALSE);
-
     load_config(self);
     /* setup self->conf now if it wasn't loaded above */
     if (!self->conf.configured)
