@@ -227,7 +227,8 @@ int main(int argc, char** argv)
     inst.prog_name = "pcmanfm";
     inst.cb = single_inst_cb;
     inst.opt_entries = opt_entries + 3;
-    inst.screen_num = gdk_x11_get_default_screen();
+    if (!strcmp (getenv ("XDG_SESSION_TYPE"), "x11"))
+        inst.screen_num = gdk_x11_get_default_screen();
     switch(single_inst_init(&inst))
     {
     case SINGLE_INST_CLIENT: /* we're not the first instance. */
