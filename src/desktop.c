@@ -258,10 +258,16 @@ void read_monitor_sizes (void)
 int gdk_mon_num (int x_mon_num)
 {
     GdkDisplay *disp = gdk_display_get_default ();
+    int i = 0;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int nmons = gdk_display_get_n_monitors (disp);
+    while (i++ < nmons) if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+    int prim = i;
+#else
     GdkScreen *scr = gdk_display_get_screen (disp, 0);
     int prim = gdk_screen_get_primary_monitor (scr);
     int nmons = gdk_screen_get_n_monitors (scr);
-    int i;
+#endif
 
     if (nmons == 1) return 0;                   /* only one monitor, so always 0 */
     if (x_mon_num == 0) return prim;            /* monitor 0 is always the primary monitor */
@@ -280,7 +286,11 @@ int gdk_mon_num (int x_mon_num)
         for (i = 0; i < nmons; i++)
         {
             GdkRectangle geom;
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gdk_monitor_get_geometry (gdk_display_get_monitor (disp, i), &geom);
+#else
             gdk_screen_get_monitor_geometry (scr, i, &geom);
+#endif
             if (geom.x == mon_sizes[x_mon_num].x && geom.y == mon_sizes[x_mon_num].y &&
                 geom.width == mon_sizes[x_mon_num].width && geom.height == mon_sizes[x_mon_num].height)
                     return i;
@@ -292,7 +302,11 @@ int gdk_mon_num (int x_mon_num)
     for (i = 0; i < nmons; i++)
     {
         GdkRectangle geom;
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_monitor_get_geometry (gdk_display_get_monitor (disp, i), &geom);
+#else
         gdk_screen_get_monitor_geometry (scr, i, &geom);
+#endif
         if (geom.x == mon_sizes[x_mon_num].x && geom.y == mon_sizes[x_mon_num].y &&
             geom.width == mon_sizes[x_mon_num].width && geom.height == mon_sizes[x_mon_num].height)
                 return i;
@@ -305,10 +319,16 @@ int gdk_mon_num (int x_mon_num)
 int x_mon_num (int gdk_mon_num)
 {
     GdkDisplay *disp = gdk_display_get_default ();
+    int i = 0;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int nmons = gdk_display_get_n_monitors (disp);
+    while (i++ < nmons) if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+    int prim = i;
+#else
     GdkScreen *scr = gdk_display_get_screen (disp, 0);
     int prim = gdk_screen_get_primary_monitor (scr);
     int nmons = gdk_screen_get_n_monitors (scr);
-    int i;
+#endif
 
     if (nmons == 1) return 0;           /* only one monitor, so always 0 */
     if (gdk_mon_num == prim) return 0;  /* monitor 0 is always the primary monitor */
@@ -316,7 +336,11 @@ int x_mon_num (int gdk_mon_num)
 
     /* compare sizes and locations; only needed with more than 2 monitors... */
     GdkRectangle geom;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_monitor_get_geometry (gdk_display_get_monitor (disp, gdk_mon_num), &geom);
+#else
     gdk_screen_get_monitor_geometry (scr, gdk_mon_num, &geom);
+#endif
 
     /* sanity check the table */
     for (i = 0; i < MAX_MONS; i++)
@@ -359,10 +383,19 @@ int monitor_at_pointer (void)
 {
     GdkDisplay *dis = gdk_display_get_default ();
     GdkScreen *scr;
-    int x, y, m;
+    int x, y;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int m;
+    gdk_device_get_position (gdk_seat_get_pointer (gdk_display_get_default_seat (dis)), &scr, &x, &y);
+    GdkMonitor *mon = gdk_display_get_monitor_at_point (dis, x, y);
+    for (m = 0; m < gdk_display_get_n_monitors (dis); m++)
+        if (gdk_display_get_monitor (dis, m) == mon) break;
+    return x_mon_num (m);
+#else
     gdk_display_get_pointer (dis, &scr, &x, &y, NULL);
     return x_mon_num (gdk_screen_get_monitor_at_point (scr, x, y));
+#endif
 }
 
 /* ---------------------------------------------------------------------
@@ -2448,7 +2481,11 @@ static void update_background(FmDesktop* desktop, int is_it)
     Display* xdisplay;
     Pixmap xpixmap;
     Window xroot;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int screen_num = 0;
+#else
     int screen_num = gdk_screen_get_number(screen);
+#endif
 
     char *wallpaper;
 
@@ -2612,11 +2649,20 @@ static void update_background(FmDesktop* desktop, int is_it)
 #endif
         {
             GdkRectangle geom;
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+#else
             gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
+#endif
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
             {
+#if GTK_CHECK_VERSION(3, 0, 0)
+                dest_w = geom.width;
+                dest_h = geom.height;
+#else
                 dest_w = gdk_screen_get_width(screen);
                 dest_h = gdk_screen_get_height(screen);
+#endif
                 x = -geom.x;
                 y = -geom.y;
             }
@@ -2864,16 +2910,13 @@ static void on_rows_reordered(FmFolderModel* model, GtkTreePath* parent_tp, GtkT
 
 static void update_working_area(FmDesktop* desktop)
 {
-    GdkScreen* screen = gtk_widget_get_screen((GtkWidget*)desktop);
-    GdkRectangle geom;
 #if GTK_CHECK_VERSION(3, 4, 0)
-    gdk_screen_get_monitor_workarea(screen, gdk_mon_num_for_desktop (desktop), &desktop->working_area);
-    /* we need working area coordinates within the monitor not the screen */
-    gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
-    desktop->working_area.x -= geom.x;
-    desktop->working_area.y -= geom.y;
+    GdkMonitor *mon = gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop));
+    gdk_monitor_get_workarea (mon, &desktop->working_area);
 #else
+    GdkScreen* screen = gtk_widget_get_screen((GtkWidget*)desktop);
     GdkWindow* root = gdk_screen_get_root_window(screen);
+    GdkRectangle geom;
     Atom ret_type;
     gulong len, after;
     int format;
@@ -2991,7 +3034,11 @@ static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointe
 static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
 {
     GdkRectangle geom;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (gdk_mon_num_for_desktop (desktop) >= gdk_display_get_n_monitors (gdk_display_get_default ()))
+#else
     if (gdk_mon_num_for_desktop (desktop) >= gdk_screen_get_n_monitors(screen))
+#endif
     {
         gint i;
         /* our monitor was disconnected... remove FmDesktop now! */
@@ -3003,7 +3050,11 @@ static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
         gtk_widget_destroy(GTK_WIDGET(desktop));
         return;
     }
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+#else
     gdk_screen_get_monitor_geometry(screen, gdk_mon_num_for_desktop (desktop), &geom);
+#endif
     gtk_window_resize((GtkWindow*)desktop, geom.width, geom.height);
     /* bug #3614780: if monitor was moved desktop should be moved too */
     gtk_window_move((GtkWindow*)desktop, geom.x, geom.y);
@@ -3627,7 +3678,8 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkAllocation geom;
-    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), gdk_mon_num_for_desktop (self), &geom);
+
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (self)), &geom);
     gtk_widget_set_size_request (w, geom.width, geom.height);
 #endif
 
@@ -3690,14 +3742,14 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 static void on_get_preferred_width(GtkWidget *w, gint *minimal_width, gint *natural_width)
 {
     GdkRectangle geom;
-    gdk_screen_get_monitor_geometry (gtk_widget_get_screen (w), gdk_mon_num_for_desktop (FM_DESKTOP (w)), &geom);
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (FM_DESKTOP (w))), &geom);
     *minimal_width = *natural_width = geom.width;
 }
 
 static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *natural_height)
 {
     GdkRectangle geom;
-    gdk_screen_get_monitor_geometry (gtk_widget_get_screen(w), gdk_mon_num_for_desktop (FM_DESKTOP (w)), &geom);
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (FM_DESKTOP (w))), &geom);
     *minimal_height = *natural_height = geom.height;
 }
 #else
@@ -4335,13 +4387,15 @@ static void desktop_search_position(FmDesktop *desktop)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     gtk_widget_get_preferred_size(desktop->search_window, NULL, &requisition);
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
 #else
     gtk_widget_size_request(desktop->search_window, &requisition);
-#endif
 
     /* put it into right upper corner */
     gdk_screen_get_monitor_geometry(gtk_widget_get_screen((GtkWidget*)desktop),
                                     gdk_mon_num_for_desktop (desktop), &geom);
+#endif
+
     x = geom.x + desktop->working_area.x + desktop->working_area.width - requisition.width;
     y = geom.y + desktop->working_area.y;
 
@@ -4512,7 +4566,6 @@ static gboolean on_key_press(GtkWidget* w, GdkEventKey* evt)
     GtkTreePath* tp = NULL;
     GtkTreeIter it;
     char *old_text, *new_text;
-    GdkScreen *screen;
     GdkEvent *new_event;
     guint popup_menu_id;
     gboolean retval;
@@ -4638,10 +4691,18 @@ static gboolean on_key_press(GtkWidget* w, GdkEventKey* evt)
     popup_menu_id = g_signal_connect(desktop->search_entry, "popup-menu", G_CALLBACK(gtk_true), NULL);
 
     /* move the search window offscreen */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRectangle geom;
+    gdk_monitor_get_geometry (gdk_display_get_monitor_at_window (gdk_display_get_default (),
+        gtk_widget_get_window (desktop->search_window)), &geom);
+    gtk_window_move(GTK_WINDOW(desktop->search_window), geom.width + 1, geom.height + 1);
+#else
+    GdkScreen *screen;
     screen = gtk_widget_get_screen(w);
     gtk_window_move(GTK_WINDOW(desktop->search_window),
                     gdk_screen_get_width(screen) + 1,
                     gdk_screen_get_height(screen) + 1);
+#endif
     gtk_widget_show(desktop->search_window);
 
     /* allocate a new event to forward */
@@ -5384,7 +5445,11 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     if(self->monitor < 0)
         return object; /* this monitor is disabled */
     g_debug("fm_desktop_constructor for monitor %d", self->monitor);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), self->monitor), &geom);
+#else
     gdk_screen_get_monitor_geometry(screen, self->monitor, &geom);
+#endif
     gtk_window_set_default_size((GtkWindow*)self, geom.width, geom.height);
     gtk_window_move(GTK_WINDOW(self), geom.x, geom.y);
     gtk_widget_set_app_paintable((GtkWidget*)self, TRUE);
@@ -6397,6 +6462,13 @@ void fm_desktop_manager_init(gint on_screen)
     /* FIXME: should we store the desktop folder path in the annoying ~/.config/user-dirs.dirs file? */
 
     gdpy = gdk_display_get_default();
+#if GTK_CHECK_VERSION(3, 0, 0)
+
+    n_mon = gdk_display_get_n_monitors (gdpy);
+    desktops = g_new (FmDesktop*, n_mon);
+    GdkScreen* screen = gdk_display_get_default_screen (gdpy);
+    for (mon = 0; mon < n_mon; mon++)
+#else
     n_scr = gdk_display_get_n_screens(gdpy);
     n_screens = 0;
     for(i = 0; i < n_scr; i++)
@@ -6407,6 +6479,7 @@ void fm_desktop_manager_init(gint on_screen)
         GdkScreen* screen = gdk_display_get_screen(gdpy, scr);
         n_mon = gdk_screen_get_n_monitors(screen);
         for(mon = 0; mon < n_mon; mon++)
+#endif
         {
             gint mon_init = (on_screen < 0 || on_screen == (int)scr) ? (int)mon : (mon ? -2 : -1);
             FmDesktop *desktop = fm_desktop_new(screen, mon_init);
@@ -6453,7 +6526,9 @@ void fm_desktop_manager_init(gint on_screen)
             gtk_widget_show_all(widget);
             gdk_window_lower(gtk_widget_get_window(widget));
         }
+#if !GTK_CHECK_VERSION(3, 0, 0)
     }
+#endif
 
     icon_theme_changed = g_signal_connect(gtk_icon_theme_get_default(), "changed", G_CALLBACK(on_icon_theme_changed), NULL);
 
@@ -6572,7 +6647,9 @@ void fm_desktop_wallpaper_changed(FmDesktop *desktop)
 void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data)
 {
     GdkDisplay *gdpy = gdk_display_get_default ();
+#if !GTK_CHECK_VERSION(3, 0, 0)
     int n_scr = gdk_display_get_n_screens (gdpy);
+#endif
     int scr, mon, dsk;
 
     // tear down existing desktops
@@ -6602,19 +6679,28 @@ void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data
     }
 
     // find new number of monitors
+#if GTK_CHECK_VERSION(3, 0, 0)
+    n_screens = gdk_display_get_n_monitors (gdpy);
+#else
     n_screens = 0;
     for (scr = 0; scr < n_scr; scr++)
         n_screens += gdk_screen_get_n_monitors (gdk_display_get_screen (gdpy, scr));
+#endif
 
     // create new desktops
     desktops = g_new (FmDesktop*, n_screens);
     dsk = 0;
 
     // loop through all monitors, creating a desktop for each
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkScreen *screen = gdk_display_get_default_screen (gdpy);
+    for (mon = 0; mon < gdk_display_get_n_monitors (gdpy); mon++);
+#else
     for (scr = 0; scr < n_scr; scr++)
     {
         GdkScreen *screen = gdk_display_get_screen (gdpy, scr);
         for (mon = 0; mon < gdk_screen_get_n_monitors (screen); mon++)
+#endif
         {
             FmFolder *desktop_folder;
             FmDesktop *desktop = fm_desktop_new (screen, mon);
@@ -6642,7 +6728,9 @@ void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data
             gtk_widget_show_all (GTK_WIDGET (desktop));
             gdk_window_lower (gtk_widget_get_window (GTK_WIDGET (desktop)));
         }
+#if !GTK_CHECK_VERSION(3, 0, 0)
     }
+#endif
 
     // re-create desktop items
     documents = _add_extra_item (g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
