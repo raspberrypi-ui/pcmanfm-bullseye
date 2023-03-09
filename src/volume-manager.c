@@ -278,7 +278,7 @@ inline static void show_autorun_dlg(GVolume* vol, GMount* mount)
     g_object_unref(gicon);
 
     gtk_dialog_set_default_response(data->dlg, GTK_RESPONSE_OK);
-    gtk_dialog_set_alternative_button_order(data->dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1);
+    //gtk_dialog_set_alternative_button_order(data->dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1);
 
     tree_sel = gtk_tree_view_get_selection(data->view);
     gtk_tree_selection_set_mode(tree_sel, GTK_SELECTION_BROWSE);

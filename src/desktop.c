@@ -4809,9 +4809,9 @@ static void on_realize(GtkWidget* w)
     css_data = g_strdup_printf("FmDesktop {\n"
                                    "background-color: #%02x%02x%02x\n"
                                "}",
-                               (int) self->conf.desktop_bg.red * 256,
-                               (int) self->conf.desktop_bg.green * 256,
-                               (int) self->conf.desktop_bg.blue * 256);
+                               (int) (self->conf.desktop_bg.red * 255),
+                               (int) (self->conf.desktop_bg.green * 255),
+                               (int) (self->conf.desktop_bg.blue * 255));
     gtk_css_provider_load_from_data(self->css, css_data, -1, NULL);
     g_free(css_data);
 #endif
@@ -5942,8 +5942,8 @@ static void on_bg_color_set(GtkColorButton *btn, FmDesktop *desktop)
     {
         char *css_data = g_strdup_printf("FmDesktop {\n"
                                              "background-color: #%02x%02x%02x\n"
-                                         "}", (int) new_val.red * 256, (int) new_val.green * 256,
-                                         (int) new_val.blue * 256);
+                                         "}", (int) (new_val.red * 255), (int) (new_val.green * 255),
+                                         (int) (new_val.blue * 255));
         gtk_css_provider_load_from_data(desktop->css, css_data, -1, NULL);
         g_free(css_data);
 #else

@@ -1084,6 +1084,20 @@ void fm_app_config_save_desktop_config(GString *buf, const char *group, FmDeskto
     }
     if (cfg->wallpaper_common && cfg->wallpaper)
         g_string_append_printf(buf, "wallpaper=%s\n", cfg->wallpaper);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    g_string_append_printf(buf, "desktop_bg=#%02x%02x%02x\n",
+                           (int) (cfg->desktop_bg.red * 255),
+                           (int) (cfg->desktop_bg.green * 255),
+                           (int) (cfg->desktop_bg.blue * 255));
+    g_string_append_printf(buf, "desktop_fg=#%02x%02x%02x\n",
+                           (int) (cfg->desktop_fg.red * 255),
+                           (int) (cfg->desktop_fg.green * 255),
+                           (int) (cfg->desktop_fg.blue * 255));
+    g_string_append_printf(buf, "desktop_shadow=#%02x%02x%02x\n",
+                           (int) (cfg->desktop_shadow.red * 255),
+                           (int) (cfg->desktop_shadow.green * 255),
+                           (int) (cfg->desktop_shadow.blue * 255));
+#else
     g_string_append_printf(buf, "desktop_bg=#%02x%02x%02x\n",
                            cfg->desktop_bg.red/257,
                            cfg->desktop_bg.green/257,
@@ -1096,6 +1110,7 @@ void fm_app_config_save_desktop_config(GString *buf, const char *group, FmDeskto
                            cfg->desktop_shadow.red/257,
                            cfg->desktop_shadow.green/257,
                            cfg->desktop_shadow.blue/257);
+#endif
     if(cfg->desktop_font && *cfg->desktop_font)
         g_string_append_printf(buf, "desktop_font=%s\n", cfg->desktop_font);
     if(cfg->folder)
