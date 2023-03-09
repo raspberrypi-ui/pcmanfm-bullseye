@@ -282,7 +282,7 @@ int main(int argc, char** argv)
     g_signal_connect (gdk_display_get_default (), "monitor-removed", G_CALLBACK (monitors_changed), NULL);
 
     /* the main part */
-#if GTK_CHECK_VERSION(3, 6, 0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     if(pcmanfm_run (0))
 #else
     if(pcmanfm_run(gdk_screen_get_number(gdk_screen_get_default())))
