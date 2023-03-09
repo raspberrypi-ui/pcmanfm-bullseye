@@ -622,19 +622,31 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     tmp = g_key_file_get_string(kf, group, "desktop_bg", NULL);
     if(tmp)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_rgba_parse (&cfg->desktop_bg, tmp);
+#else
         gdk_color_parse(tmp, &cfg->desktop_bg);
+#endif
         g_free(tmp);
     }
     tmp = g_key_file_get_string(kf, group, "desktop_fg", NULL);
     if(tmp)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_rgba_parse (&cfg->desktop_fg, tmp);
+#else
         gdk_color_parse(tmp, &cfg->desktop_fg);
+#endif
         g_free(tmp);
     }
     tmp = g_key_file_get_string(kf, group, "desktop_shadow", NULL);
     if(tmp)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_rgba_parse (&cfg->desktop_shadow, tmp);
+#else
         gdk_color_parse(tmp, &cfg->desktop_shadow);
+#endif
         g_free(tmp);
     }
 

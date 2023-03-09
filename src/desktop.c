@@ -2176,10 +2176,18 @@ static void paint_item(FmDesktop* self, FmDesktopItem* item, cairo_t* cr, GdkRec
     else
     {
         /* the shadow */
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_cairo_set_source_rgba (cr, &self->conf.desktop_shadow);
+#else
         gdk_cairo_set_source_color(cr, &self->conf.desktop_shadow);
+#endif
         cairo_move_to(cr, text_x + 1, text_y + 1);
         //pango_cairo_show_layout(cr, self->pl);
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gdk_cairo_set_source_rgba (cr, &self->conf.desktop_fg);
+#else
         gdk_cairo_set_source_color(cr, &self->conf.desktop_fg);
+#endif
     }
     /* real text */
     cairo_move_to(cr, text_x, text_y);
@@ -2350,8 +2358,12 @@ static void paint_rubber_banding_rect(FmDesktop* self, cairo_t* cr, GdkRectangle
 {
     GtkWidget* widget = (GtkWidget*)self;
     GdkRectangle rect;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRGBA clr;
+#else
     GdkColor clr;
     guchar alpha;
+#endif
 
     calc_rubber_banding_rect(self, self->rubber_bending_x, self->rubber_bending_y, &rect);
 
@@ -2366,15 +2378,28 @@ static void paint_rubber_banding_rect(FmDesktop* self, cairo_t* cr, GdkRectangle
                         "selection-box-alpha", &alpha,
                         NULL);
 */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gtk_style_context_get_background_color(gtk_widget_get_style_context (widget), GTK_STATE_FLAG_SELECTED, &clr);
+    clr.alpha = 0.64;
+#else
     clr = gtk_widget_get_style (widget)->base[GTK_STATE_SELECTED];
     alpha = 64;  /* FIXME: should be themable in the future */
+#endif
 
     cairo_save(cr);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    cairo_set_source_rgba(cr, clr.red, clr.green, clr.blue, clr.alpha);
+#else
     cairo_set_source_rgba(cr, (gdouble)clr.red/65535, (gdouble)clr.green/65536, (gdouble)clr.blue/65535, (gdouble)alpha/100);
+#endif
     gdk_cairo_rectangle(cr, &rect);
     cairo_clip (cr);
     cairo_paint (cr);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_cairo_set_source_rgba(cr, &clr);
+#else
     gdk_cairo_set_source_color(cr, &clr);
+#endif
     cairo_rectangle (cr, rect.x + 0.5, rect.y + 0.5, rect.width - 1, rect.height - 1);
     cairo_stroke(cr);
     cairo_restore(cr);
@@ -2554,9 +2579,9 @@ static void update_background(FmDesktop* desktop, int is_it)
     if(!cache) /* solid color only */
     {
 #if GTK_CHECK_VERSION(3, 0, 0)
-        pattern = cairo_pattern_create_rgb(desktop->conf.desktop_bg.red / 65535.0,
-                                           desktop->conf.desktop_bg.green / 65535.0,
-                                           desktop->conf.desktop_bg.blue / 65535.0);
+        pattern = cairo_pattern_create_rgb(desktop->conf.desktop_bg.red,
+                                           desktop->conf.desktop_bg.green,
+                                           desktop->conf.desktop_bg.blue);
         gdk_window_set_background_pattern(window, pattern);
         cairo_pattern_destroy(pattern);
 #else
@@ -2624,7 +2649,11 @@ static void update_background(FmDesktop* desktop, int is_it)
             || desktop->conf.wallpaper_mode == FM_WP_CENTER
             || desktop->conf.wallpaper_mode == FM_WP_FIT)
         {
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gdk_cairo_set_source_rgba (cr, &desktop->conf.desktop_bg);
+#else
             gdk_cairo_set_source_color(cr, &desktop->conf.desktop_bg);
+#endif
             cairo_rectangle(cr, 0, 0, dest_w, dest_h);
             cairo_fill(cr);
         }
@@ -4709,9 +4738,9 @@ static void on_realize(GtkWidget* w)
     css_data = g_strdup_printf("FmDesktop {\n"
                                    "background-color: #%02x%02x%02x\n"
                                "}",
-                               self->conf.desktop_bg.red/256,
-                               self->conf.desktop_bg.green/256,
-                               self->conf.desktop_bg.blue/256);
+                               (int) self->conf.desktop_bg.red * 256,
+                               (int) self->conf.desktop_bg.green * 256,
+                               (int) self->conf.desktop_bg.blue * 256);
     gtk_css_provider_load_from_data(self->css, css_data, -1, NULL);
     g_free(css_data);
 #endif
@@ -5830,18 +5859,24 @@ static void on_wallpaper_mode_changed2(GtkComboBox *combo, GtkWidget *wallpaper_
 
 static void on_bg_color_set(GtkColorButton *btn, FmDesktop *desktop)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRGBA new_val;
+
+    gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (btn), &new_val);
+    if (!gdk_rgba_equal (&desktop->conf.desktop_bg, &new_val))
+    {
+        char *css_data = g_strdup_printf("FmDesktop {\n"
+                                             "background-color: #%02x%02x%02x\n"
+                                         "}", (int) new_val.red * 256, (int) new_val.green * 256,
+                                         (int) new_val.blue * 256);
+        gtk_css_provider_load_from_data(desktop->css, css_data, -1, NULL);
+        g_free(css_data);
+#else
     GdkColor new_val;
 
     gtk_color_button_get_color(btn, &new_val);
     if (!gdk_color_equal(&desktop->conf.desktop_bg, &new_val))
     {
-#if GTK_CHECK_VERSION(3, 0, 0)
-        char *css_data = g_strdup_printf("FmDesktop {\n"
-                                             "background-color: #%02x%02x%02x\n"
-                                         "}", new_val.red/256, new_val.green/256,
-                                         new_val.blue/256);
-        gtk_css_provider_load_from_data(desktop->css, css_data, -1, NULL);
-        g_free(css_data);
 #endif
         desktop->conf.desktop_bg = new_val;
         queue_config_save(desktop);
@@ -5863,10 +5898,17 @@ static void on_wallpaper_common_toggled(GtkToggleButton* btn, FmDesktop *desktop
 
 static void on_fg_color_set(GtkColorButton *btn, FmDesktop *desktop)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRGBA new_val;
+
+    gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (btn), &new_val);
+    if (!gdk_rgba_equal (&desktop->conf.desktop_fg, &new_val))
+#else
     GdkColor new_val;
 
     gtk_color_button_get_color(btn, &new_val);
     if (!gdk_color_equal(&desktop->conf.desktop_fg, &new_val))
+#endif
     {
         desktop->conf.desktop_fg = new_val;
         queue_config_save(desktop);
@@ -5876,10 +5918,17 @@ static void on_fg_color_set(GtkColorButton *btn, FmDesktop *desktop)
 
 static void on_shadow_color_set(GtkColorButton *btn, FmDesktop *desktop)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GdkRGBA new_val;
+
+    gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (btn), &new_val);
+    if (!gdk_rgba_equal(&desktop->conf.desktop_shadow, &new_val))
+#else
     GdkColor new_val;
 
     gtk_color_button_get_color(btn, &new_val);
     if (!gdk_color_equal(&desktop->conf.desktop_shadow, &new_val))
+#endif
     {
         desktop->conf.desktop_shadow = new_val;
         queue_config_save(desktop);
@@ -5900,7 +5949,11 @@ static void on_wm_menu_toggled(GtkToggleButton* btn, FmDesktop *desktop)
 
 static void on_desktop_font_set(GtkFontButton* btn, FmDesktop *desktop)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    const char* font = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (btn));
+#else
     const char* font = gtk_font_button_get_font_name(btn);
+#endif
 
     if(font)
     {
@@ -6139,23 +6192,39 @@ void fm_desktop_preference(GtkAction *act, FmDesktop *desktop)
                                      desktop->conf.wallpaper_mode != FM_WP_COLOR);
         }
         item = gtk_builder_get_object(builder, "desktop_bg");
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER(item), &desktop->conf.desktop_bg);
+#else
         gtk_color_button_set_color(GTK_COLOR_BUTTON(item), &desktop->conf.desktop_bg);
+#endif
         g_signal_connect(item, "color-set", G_CALLBACK(on_bg_color_set), desktop);
         item = gtk_builder_get_object(builder, "wallpaper_common");
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), desktop->conf.wallpaper_common);
         g_signal_connect(item, "toggled", G_CALLBACK(on_wallpaper_common_toggled), desktop);
         item = gtk_builder_get_object(builder, "desktop_fg");
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER(item), &desktop->conf.desktop_fg);
+#else
         gtk_color_button_set_color(GTK_COLOR_BUTTON(item), &desktop->conf.desktop_fg);
+#endif
         g_signal_connect(item, "color-set", G_CALLBACK(on_fg_color_set), desktop);
         item = gtk_builder_get_object(builder, "desktop_shadow");
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER(item), &desktop->conf.desktop_shadow);
+#else
         gtk_color_button_set_color(GTK_COLOR_BUTTON(item), &desktop->conf.desktop_shadow);
+#endif
         g_signal_connect(item, "color-set", G_CALLBACK(on_shadow_color_set), desktop);
         item = gtk_builder_get_object(builder, "show_wm_menu");
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), desktop->conf.show_wm_menu);
         g_signal_connect(item, "toggled", G_CALLBACK(on_wm_menu_toggled), desktop);
         item = gtk_builder_get_object(builder, "desktop_font");
         if(desktop->conf.desktop_font)
+#if GTK_CHECK_VERSION(3, 0, 0)
+            gtk_font_chooser_set_font (GTK_FONT_CHOOSER(item), desktop->conf.desktop_font);
+#else
             gtk_font_button_set_font_name(GTK_FONT_BUTTON(item), desktop->conf.desktop_font);
+#endif
         g_signal_connect(item, "font-set", G_CALLBACK(on_desktop_font_set), desktop);
 
         data = g_new(FolderChooserData, 1);
