@@ -658,6 +658,7 @@ static inline void reload_items(FmDesktop *desktop)
     load_items(desktop);
 }
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static gint get_desktop_for_root_window(GdkWindow *root)
 {
     gint desktop = -1;
@@ -676,6 +677,7 @@ static gint get_desktop_for_root_window(GdkWindow *root)
     }
     return desktop;
 }
+#endif
 
 /* save position of desktop icons */
 static void save_item_pos(FmDesktop* desktop)
@@ -4003,7 +4005,11 @@ static gboolean on_single_click_timeout(gpointer user_data)
         return FALSE;
     /* ensure we are still on the same item */
     window = gtk_widget_get_window(w);
+#if GTK_CHECK_VERSION(3, 0, 0)
+    gdk_window_get_device_position (window, gdk_seat_get_pointer (gdk_display_get_default_seat (gdk_display_get_default ())), &x, &y, &state);
+#else
     gdk_window_get_pointer(window, &x, &y, &state);
+#endif
     item = hit_test(self, &it, x, y, NULL);
     if (item != self->hover_item)
         return FALSE;
@@ -4487,7 +4493,11 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
     gtk_widget_show(frame);
 
     /* allocate the vertical box */
+#if GTK_CHECK_VERSION(3, 0, 0)
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+#else
     vbox = g_object_new(GTK_TYPE_VBOX, "border-width", 3, NULL);
+#endif
     gtk_container_add(GTK_CONTAINER(frame), vbox);
     gtk_widget_show(vbox);
 
@@ -5435,7 +5445,6 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     GdkScreen* screen = gtk_widget_get_screen((GtkWidget*)self);
     GdkWindow* root;
     guint i;
-    gint n;
     GdkRectangle geom;
 
     for(i = 0; i < n_construct_properties; i++)
@@ -5491,6 +5500,7 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
 #if GTK_CHECK_VERSION(3, 0, 0)
     self->cur_desktop = self->monitor;
 #else
+    gint n;
     n = get_desktop_for_root_window(root);
     if(n < 0)
         n = 0;
@@ -6238,7 +6248,12 @@ void fm_desktop_preference(GtkAction *act, FmDesktop *desktop)
         item = gtk_builder_get_object(builder, "wallpaper");
         g_signal_connect(item, "file-set", G_CALLBACK(on_wallpaper_set), desktop);
         img_preview = gtk_image_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
+        gtk_widget_set_halign (img_preview, GTK_ALIGN_CENTER);
+        gtk_widget_set_valign (img_preview, GTK_ALIGN_START);
+#else
         gtk_misc_set_alignment(GTK_MISC(img_preview), 0.5, 0.0);
+#endif
         gtk_widget_set_size_request( img_preview, 128, 128 );
         gtk_file_chooser_set_preview_widget(GTK_FILE_CHOOSER(item), img_preview);
         g_signal_connect( item, "update-preview", G_CALLBACK(on_update_img_preview), img_preview );
@@ -6446,7 +6461,7 @@ void fm_desktop_reconfigure (GtkAction *act)
 void fm_desktop_manager_init(gint on_screen)
 {
     GdkDisplay * gdpy;
-    int i, n_scr, n_mon, scr, mon;
+    int i, n_mon, scr, mon;
     const char* desktop_path;
 #if FM_CHECK_VERSION(1, 2, 0)
     GFile *gf;
@@ -6463,13 +6478,13 @@ void fm_desktop_manager_init(gint on_screen)
 
     gdpy = gdk_display_get_default();
 #if GTK_CHECK_VERSION(3, 0, 0)
-
     n_mon = gdk_display_get_n_monitors (gdpy);
+    scr = 0;
     desktops = g_new (FmDesktop*, n_mon);
     GdkScreen* screen = gdk_display_get_default_screen (gdpy);
-    for (mon = 0; mon < n_mon; mon++)
+    for (mon = 0, i = 0; mon < n_mon; mon++)
 #else
-    n_scr = gdk_display_get_n_screens(gdpy);
+    int n_scr = gdk_display_get_n_screens(gdpy);
     n_screens = 0;
     for(i = 0; i < n_scr; i++)
         n_screens += gdk_screen_get_n_monitors(gdk_display_get_screen(gdpy, i));
@@ -6532,7 +6547,11 @@ void fm_desktop_manager_init(gint on_screen)
 
     icon_theme_changed = g_signal_connect(gtk_icon_theme_get_default(), "changed", G_CALLBACK(on_icon_theme_changed), NULL);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    hand_cursor = gdk_cursor_new_for_display (gdk_display_get_default (), GDK_HAND2);
+#else
     hand_cursor = gdk_cursor_new(GDK_HAND2);
+#endif
 
 #if FM_CHECK_VERSION(1, 2, 0)
     /* create extra items */
@@ -6596,7 +6615,11 @@ void fm_desktop_manager_finalize()
 
     if(hand_cursor)
     {
+#if GTK_CHECK_VERSION(3, 0, 0)
+        g_object_unref (hand_cursor);
+#else
         gdk_cursor_unref(hand_cursor);
+#endif
         hand_cursor = NULL;
     }
 
@@ -6648,9 +6671,9 @@ void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data
 {
     GdkDisplay *gdpy = gdk_display_get_default ();
 #if !GTK_CHECK_VERSION(3, 0, 0)
-    int n_scr = gdk_display_get_n_screens (gdpy);
+    int scr, n_scr = gdk_display_get_n_screens (gdpy);
 #endif
-    int scr, mon, dsk;
+    int mon, dsk;
 
     // tear down existing desktops
     for (mon = 0; mon < n_screens; mon++)
