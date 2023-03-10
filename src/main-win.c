@@ -438,7 +438,7 @@ static void create_bookmarks_menu(FmMainWin* win)
     for(l=list;l;l=l->next)
     {
         FmBookmarkItem* item = (FmBookmarkItem*)l->data;
-        mi = gtk_image_menu_item_new_with_label(item->name);
+        mi = gtk_menu_item_new_with_label(item->name);
         gtk_widget_show(mi);
         g_object_set_qdata_full(G_OBJECT(mi), main_win_qdata,
                                 fm_path_ref(item->path), (GDestroyNotify)fm_path_unref);
@@ -741,7 +741,7 @@ static void fm_main_win_init(FmMainWin *win)
 
     gtk_window_set_icon_name(GTK_WINDOW(win), "folder");
 
-    vbox = (GtkBox*)gtk_vbox_new(FALSE, 0);
+    vbox = (GtkBox*)gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     /* create menu bar and toolbar */
     ui = gtk_ui_manager_new();
@@ -949,7 +949,7 @@ static void fm_main_win_init(FmMainWin *win)
 
     win->path_bar = fm_path_bar_new();
     g_signal_connect(win->path_bar, "chdir", G_CALLBACK(on_path_bar_chdir), win);
-    pathbox = (GtkBox*)gtk_hbox_new(FALSE, 0);
+    pathbox = (GtkBox*)gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(pathbox, GTK_WIDGET(win->location), TRUE, TRUE, 0);
     gtk_box_pack_start(pathbox, GTK_WIDGET(win->path_bar), TRUE, TRUE, 0);
 
@@ -2353,7 +2353,7 @@ static void on_notebook_switch_page(GtkNotebook* nb, gpointer* new_page, guint n
         /* ok, passive view was just changed, we have to update the button */
         psv_page = _find_tab_page(win, passive_view);
         if (psv_page)
-            gtk_widget_set_state(GTK_WIDGET(psv_page->tab_label), GTK_STATE_SELECTED);
+            gtk_widget_set_state_flags(GTK_WIDGET(psv_page->tab_label), GTK_STATE_FLAG_SELECTED, TRUE);
     }
     else
     {
@@ -2765,7 +2765,7 @@ static void on_dual_pane(GtkToggleAction* act, FmMainWin* win)
         fm_tab_page_set_passive_view(win->current_page, fv,
                                      win->passive_view_on_right);
         /* ok, passive view was just changed, we have to update the button */
-        gtk_widget_set_state(GTK_WIDGET(FM_TAB_PAGE(page)->tab_label), GTK_STATE_SELECTED);
+        gtk_widget_set_state_flags(GTK_WIDGET(FM_TAB_PAGE(page)->tab_label), GTK_STATE_FLAG_SELECTED, TRUE);
         win->enable_passive_view = TRUE;
     }
     else if (!active && win->enable_passive_view)
@@ -2778,7 +2778,7 @@ static void on_dual_pane(GtkToggleAction* act, FmMainWin* win)
             if (tp)
             {
                 fm_tab_page_take_view_back(tp);
-                gtk_widget_set_state(GTK_WIDGET(FM_TAB_PAGE(tp)->tab_label), GTK_STATE_ACTIVE);
+                gtk_widget_set_state_flags(GTK_WIDGET(FM_TAB_PAGE(tp)->tab_label), GTK_STATE_FLAG_ACTIVE, TRUE);
             }
         }
         win->enable_passive_view = FALSE;

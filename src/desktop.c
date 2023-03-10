@@ -5993,7 +5993,7 @@ void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data
 
     // loop through all monitors, creating a desktop for each
     GdkScreen *screen = gdk_display_get_default_screen (gdpy);
-    for (mon = 0; mon < gdk_display_get_n_monitors (gdpy); mon++);
+    for (mon = 0; mon < gdk_display_get_n_monitors (gdpy); mon++)
         {
             FmFolder *desktop_folder;
             FmDesktop *desktop = fm_desktop_new (screen, mon);

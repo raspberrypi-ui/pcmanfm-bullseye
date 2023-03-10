@@ -884,7 +884,8 @@ static void fm_tab_page_init(FmTabPage *page)
     page->folder_view = g_object_ref_sink(folder_view);
     fm_folder_view_set_selection_mode(folder_view, GTK_SELECTION_MULTIPLE);
     page->nav_history = fm_nav_history_new();
-    page->views = GTK_BOX(gtk_hbox_new(TRUE, 4));
+    page->views = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4));
+    gtk_box_set_homogeneous (page->views, TRUE);
     gtk_box_pack_start(page->views, GTK_WIDGET(folder_view), TRUE, TRUE, 0);
     gtk_paned_add2(paned, GTK_WIDGET(page->views));
     focus_chain = g_list_prepend(focus_chain, page->views);
@@ -1184,7 +1185,7 @@ gboolean fm_tab_page_take_view_back(FmTabPage *page)
     GList *panes, *l;
     GtkWidget *folder_view = GTK_WIDGET(page->folder_view);
 
-    gtk_widget_set_state(folder_view, GTK_STATE_NORMAL);
+    gtk_widget_set_state_flags(folder_view, GTK_STATE_FLAG_NORMAL, TRUE);
     panes = gtk_container_get_children(GTK_CONTAINER(page->views));
     for (l = panes; l; l = l->next)
         if ((GtkWidget*)l->data == folder_view)
@@ -1228,7 +1229,7 @@ gboolean fm_tab_page_set_passive_view(FmTabPage *page, FmFolderView *view,
     {
     }
     pane = GTK_WIDGET(view);
-    gtk_widget_set_state(pane, GTK_STATE_ACTIVE);
+    gtk_widget_set_state_flags(pane, GTK_STATE_FLAG_ACTIVE, TRUE);
     g_object_ref(view);
     /* gtk_widget_reparent() is buggy so we do it manually */
     if (gtk_widget_get_parent(pane))
