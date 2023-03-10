@@ -75,15 +75,9 @@ typedef struct
     gboolean wallpaper_common;
     gint configured : 1;
     gint changed : 1;
-#if GTK_CHECK_VERSION(3, 0, 0)
     GdkRGBA desktop_bg;
     GdkRGBA desktop_fg;
     GdkRGBA desktop_shadow;
-#else
-    GdkColor desktop_bg;
-    GdkColor desktop_fg;
-    GdkColor desktop_shadow;
-#endif
     char* desktop_font;
     char *folder; /* NULL if default, empty if no icons, else path */
     gboolean show_wm_menu;

@@ -282,22 +282,12 @@ int main(int argc, char** argv)
     g_signal_connect (gdk_display_get_default (), "monitor-removed", G_CALLBACK (monitors_changed), NULL);
 
     /* the main part */
-#if GTK_CHECK_VERSION(3, 0, 0)
     if(pcmanfm_run (0))
-#else
-    if(pcmanfm_run(gdk_screen_get_number(gdk_screen_get_default())))
-#endif
     {
         first_run = FALSE;
         fm_volume_manager_init();
-#if !GTK_CHECK_VERSION(3, 6, 0)
-        GDK_THREADS_ENTER();
-#endif
         gtk_main();
         /* g_debug("main loop ended"); */
-#if !GTK_CHECK_VERSION(3, 6, 0)
-        GDK_THREADS_LEAVE();
-#endif
 
         if(save_config_idle)
         {

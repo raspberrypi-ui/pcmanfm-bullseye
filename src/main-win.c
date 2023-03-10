@@ -40,15 +40,9 @@
 #include "tab-page.h"
 #include "connect-server.h"
 
-#include "gseal-gtk-compat.h"
-
 #define VIEW_TAB_LOC 4
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 static void fm_main_win_destroy(GtkWidget *object);
-#else
-static void fm_main_win_destroy(GtkObject *object);
-#endif
 
 static void fm_main_win_finalize(GObject *object);
 G_DEFINE_TYPE(FmMainWin, fm_main_win, GTK_TYPE_WINDOW);
@@ -154,12 +148,7 @@ static void fm_main_win_class_init(FmMainWinClass *klass)
 {
     GObjectClass *g_object_class = G_OBJECT_CLASS(klass);
     GtkWidgetClass* widget_class = GTK_WIDGET_CLASS(klass);
-#if GTK_CHECK_VERSION(3, 0, 0)
     widget_class->destroy = fm_main_win_destroy;
-#else
-    GtkObjectClass* gtk_object_class = GTK_OBJECT_CLASS(klass);
-    gtk_object_class->destroy = fm_main_win_destroy;
-#endif
     g_object_class = G_OBJECT_CLASS(klass);
     g_object_class->finalize = fm_main_win_finalize;
 
@@ -1161,11 +1150,7 @@ FmMainWin* fm_main_win_new(void)
     return win;
 }
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 static void fm_main_win_destroy(GtkWidget *object)
-#else
-static void fm_main_win_destroy(GtkObject *object)
-#endif
 {
     FmMainWin *win;
 
@@ -1208,11 +1193,7 @@ static void fm_main_win_destroy(GtkObject *object)
             gtk_notebook_remove_page(win->notebook, 0);
     }
 
-#if GTK_CHECK_VERSION(3, 0, 0)
     (*GTK_WIDGET_CLASS(fm_main_win_parent_class)->destroy)(object);
-#else
-    (*GTK_OBJECT_CLASS(fm_main_win_parent_class)->destroy)(object);
-#endif
 }
 
 static void fm_main_win_finalize(GObject *object)
@@ -1260,13 +1241,7 @@ static void on_about(GtkAction* act, FmMainWin* win)
     if(!about_dlg)
     {
         GString *comments = g_string_new(_("Lightweight file manager\n"));
-#if GTK_CHECK_VERSION(3, 10, 0)
         GtkBuilder* builder = gtk_builder_new_from_file(PACKAGE_UI_DIR "/about.ui");
-#else
-        GtkBuilder* builder = gtk_builder_new();
-
-        gtk_builder_add_from_file(builder, PACKAGE_UI_DIR "/about.ui", NULL);
-#endif
         about_dlg = GTK_ABOUT_DIALOG(gtk_builder_get_object(builder, "dlg"));
 #if FM_CHECK_VERSION(1, 2, 0)
         g_string_append_printf(comments, _("using LibFM ver. %s\n"), fm_version());

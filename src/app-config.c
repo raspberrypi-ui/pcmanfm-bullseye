@@ -622,31 +622,19 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     tmp = g_key_file_get_string(kf, group, "desktop_bg", NULL);
     if(tmp)
     {
-#if GTK_CHECK_VERSION(3, 0, 0)
         gdk_rgba_parse (&cfg->desktop_bg, tmp);
-#else
-        gdk_color_parse(tmp, &cfg->desktop_bg);
-#endif
         g_free(tmp);
     }
     tmp = g_key_file_get_string(kf, group, "desktop_fg", NULL);
     if(tmp)
     {
-#if GTK_CHECK_VERSION(3, 0, 0)
         gdk_rgba_parse (&cfg->desktop_fg, tmp);
-#else
-        gdk_color_parse(tmp, &cfg->desktop_fg);
-#endif
         g_free(tmp);
     }
     tmp = g_key_file_get_string(kf, group, "desktop_shadow", NULL);
     if(tmp)
     {
-#if GTK_CHECK_VERSION(3, 0, 0)
         gdk_rgba_parse (&cfg->desktop_shadow, tmp);
-#else
-        gdk_color_parse(tmp, &cfg->desktop_shadow);
-#endif
         g_free(tmp);
     }
 
@@ -1084,7 +1072,6 @@ void fm_app_config_save_desktop_config(GString *buf, const char *group, FmDeskto
     }
     if (cfg->wallpaper_common && cfg->wallpaper)
         g_string_append_printf(buf, "wallpaper=%s\n", cfg->wallpaper);
-#if GTK_CHECK_VERSION(3, 0, 0)
     g_string_append_printf(buf, "desktop_bg=#%02x%02x%02x\n",
                            (int) (cfg->desktop_bg.red * 255),
                            (int) (cfg->desktop_bg.green * 255),
@@ -1097,20 +1084,6 @@ void fm_app_config_save_desktop_config(GString *buf, const char *group, FmDeskto
                            (int) (cfg->desktop_shadow.red * 255),
                            (int) (cfg->desktop_shadow.green * 255),
                            (int) (cfg->desktop_shadow.blue * 255));
-#else
-    g_string_append_printf(buf, "desktop_bg=#%02x%02x%02x\n",
-                           cfg->desktop_bg.red/257,
-                           cfg->desktop_bg.green/257,
-                           cfg->desktop_bg.blue/257);
-    g_string_append_printf(buf, "desktop_fg=#%02x%02x%02x\n",
-                           cfg->desktop_fg.red/257,
-                           cfg->desktop_fg.green/257,
-                           cfg->desktop_fg.blue/257);
-    g_string_append_printf(buf, "desktop_shadow=#%02x%02x%02x\n",
-                           cfg->desktop_shadow.red/257,
-                           cfg->desktop_shadow.green/257,
-                           cfg->desktop_shadow.blue/257);
-#endif
     if(cfg->desktop_font && *cfg->desktop_font)
         g_string_append_printf(buf, "desktop_font=%s\n", cfg->desktop_font);
     if(cfg->folder)
