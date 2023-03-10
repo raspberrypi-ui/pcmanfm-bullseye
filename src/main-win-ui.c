@@ -74,26 +74,13 @@ static const char main_menu_xml[] =
       "<menuitem action='ByMTime'/>"
       "<menuitem action='BySize'/>"
       "<menuitem action='ByType'/>"
-#if FM_CHECK_VERSION(1, 2, 0)
       "<menuitem action='ByExt'/>"
-#endif
-#if FM_CHECK_VERSION(1, 0, 2)
       "<separator/>"
-#if FM_CHECK_VERSION(1, 2, 0)
       "<menuitem action='MingleDirs'/>"
-#endif
       "<menuitem action='SortIgnoreCase'/>"
-#endif
     "</menu>"
     "<menu action='FolderView'>"
-#if FM_CHECK_VERSION(1, 2, 0)
       "<placeholder name='ViewModes'/>"
-#else
-      "<menuitem action='IconView'/>"
-      "<menuitem action='ThumbnailView'/>"
-      "<menuitem action='CompactView'/>"
-      "<menuitem action='ListView'/>"
-#endif
     "</menu>"
     "<menuitem action='SavePerFolder'/>"
     "<separator/>"
@@ -112,12 +99,7 @@ static const char main_menu_xml[] =
     "<menu action='SidePane'>"
       "<menuitem action='ShowSidePane' />"
       "<separator/>"
-#if FM_CHECK_VERSION(1, 2, 0)
       "<placeholder name='SidePaneModes'/>"
-#else
-      "<menuitem action='Places' />"
-      "<menuitem action='DirTree' />"
-#endif
     "</menu>"
     "<menuitem action='ShowStatus'/>"
     "<separator/>"
@@ -127,10 +109,8 @@ static const char main_menu_xml[] =
     "<menuitem action='SizeBigger'/>"
     "<menuitem action='SizeSmaller'/>"
     "<menuitem action='SizeDefault'/>"
-#if FM_CHECK_VERSION(1, 0, 2)
     "<separator/>"
     "<menuitem action='Filter'/>"
-#endif
   "</menu>"
   "<menu action='BookmarksMenu'>"
     "<menuitem action='AddBookmark'/>"
@@ -152,12 +132,8 @@ static const char main_menu_xml[] =
   "</menu>"
   "<menu action='ToolMenu'>"
     "<menuitem action='Term'/>"
-#if FM_CHECK_VERSION(1, 0, 2)
     "<menuitem action='Search'/>"
-#endif
-#if FM_CHECK_VERSION(1, 2, 0)
     "<menuitem action='Launch'/>"
-#endif
     /* "<menuitem action='AsRoot'/>" */
   "</menu>"
   "<menu action='HelpMenu'>"
@@ -168,9 +144,7 @@ static const char main_menu_xml[] =
 "<toolbar>"
     "<toolitem action='New'/>"
     "<toolitem action='NewTab'/>"
-#if FM_CHECK_VERSION(1, 2, 0)
     "<toolitem action='Prev'/>"
-#endif
     "<toolitem action='Next'/>"
     "<toolitem action='Up'/>"
     "<toolitem action='Home'/>"
@@ -246,14 +220,10 @@ static const char main_menu_cutdown_xml[] =
     "<menuitem action='Connect'/>"
   "</menu>"
   "<menu action='ToolMenu'>"
-#if FM_CHECK_VERSION(1, 0, 2)
     "<menuitem action='Search'/>"
     "<separator/>"
-#endif
     "<menuitem action='Term'/>"
-#if FM_CHECK_VERSION(1, 2, 0)
     "<menuitem action='Launch'/>"
-#endif
     /* "<menuitem action='AsRoot'/>" */
   "</menu>"
 "</menubar>"
@@ -263,9 +233,7 @@ static const char main_menu_cutdown_xml[] =
     "<toolitem action='CrNewFolder'/>"
     "<separator/>"
     "<toolitem action='Home'/>"
-#if FM_CHECK_VERSION(1, 2, 0)
     "<toolitem action='Prev'/>"
-#endif
     "<toolitem action='Next'/>"
     "<toolitem action='Up'/>"
 "</toolbar>"
@@ -320,10 +288,8 @@ static GtkActionEntry main_win_actions[]=
         {"SizeBigger", GTK_STOCK_ZOOM_IN, NULL, "<Ctrl>KP_Add", NULL, G_CALLBACK(on_size_increment)},
         {"SizeSmaller", GTK_STOCK_ZOOM_OUT, N_("Zoom O_ut"), "<Ctrl>KP_Subtract", NULL, G_CALLBACK(on_size_decrement)},
         {"SizeDefault", GTK_STOCK_ZOOM_100, NULL, "<Ctrl>0", NULL, G_CALLBACK(on_size_default)},
-#if FM_CHECK_VERSION(1, 0, 2)
         {"Filter", "view-filter", N_("Fil_ter..."), "<Ctrl>E", NULL, G_CALLBACK(on_filter)},
         {"ClearFilter", "view-filter", N_("Clear Filt_er"), NULL, NULL, G_CALLBACK(on_clear_filter)},
-#endif
     {"HelpMenu", NULL, N_("_Help"), NULL, NULL, NULL},
         {"About", GTK_STOCK_ABOUT, NULL, NULL, NULL, G_CALLBACK(on_about)},
         {"KeyNavList", GTK_STOCK_INFO, N_("_Keyboard Navigation"), NULL, NULL, G_CALLBACK(on_key_nav_list)},
@@ -345,12 +311,8 @@ static GtkActionEntry main_win_actions[]=
         {"AddBookmark", GTK_STOCK_ADD, N_("_Add to Bookmarks..."), "<Ctrl>D", N_("Add current folder to bookmarks list"), G_CALLBACK(on_add_bookmark)},
     {"ToolMenu", NULL, N_("Too_ls"), NULL, NULL, NULL},
         {"Term", "utilities-terminal", N_("Open Current Folder in _Terminal"), "F4", NULL, G_CALLBACK(on_open_in_terminal)},
-#if FM_CHECK_VERSION(1, 0, 2)
         {"Search", GTK_STOCK_FIND, N_("Fin_d Files..."), "<Ctrl><Shift>F", N_("Open search dialog"), G_CALLBACK(on_search)},
-#endif
-#if FM_CHECK_VERSION(1, 2, 0)
         {"Launch", GTK_STOCK_EXECUTE, N_("_Run a Command in Current Folder..."), NULL, NULL, G_CALLBACK(on_launch)},
-#endif
         /*{"AsRoot", GTK_STOCK_DIALOG_AUTHENTICATION, N_("Open Current Folder as _Root"), NULL, NULL, G_CALLBACK(on_open_as_root)},*/
     /* for accelerators */
     {"Location2", NULL, NULL, "<Alt>d", NULL, G_CALLBACK(on_location)},
@@ -365,13 +327,9 @@ static GtkActionEntry main_win_actions[]=
 /* main_win_toggle_actions+main_win_mode_actions - see 'ViewMenu' for mnemonics */
 static GtkToggleActionEntry main_win_toggle_actions[]=
 {
-#if FM_CHECK_VERSION(1, 2, 0)
     /* Note to translators: "Mingle..." means "Do not put folders before files" but make the translation as short as possible, please! */
     {"MingleDirs", NULL, N_("Mingle _Files and Folders"), NULL, NULL, G_CALLBACK(on_mingle_dirs), FALSE},
-#endif
-#if FM_CHECK_VERSION(1, 0, 2)
     {"SortIgnoreCase", NULL, N_("_Ignore Name Case"), NULL, NULL, G_CALLBACK(on_sort_ignore_case), TRUE},
-#endif
     {"ShowHidden", NULL, N_("Sho_w Hidden"), "<Ctrl>H", NULL, G_CALLBACK(on_show_hidden), FALSE},
     {"ShowThumbs", NULL, N_("Show Thum_bnails"), "<Ctrl>T", NULL, G_CALLBACK(on_show_thumbs), FALSE},
     /* Note to translators: this save is meant for folder's settings such as sort */
@@ -389,16 +347,6 @@ static GtkToggleActionEntry main_win_toggle_actions[]=
     {"Fullscreen", NULL, N_("Fullscreen _Mode"), "F11", NULL, G_CALLBACK(on_fullscreen), FALSE}
 };
 
-#if !FM_CHECK_VERSION(1, 2, 0)
-static GtkRadioActionEntry main_win_mode_actions[]=
-{
-    {"IconView", NULL, N_("_Icon View"), "<Ctrl>1", NULL, FM_FV_ICON_VIEW},
-    {"CompactView", NULL, N_("_Compact View"), "<Ctrl>2", NULL, FM_FV_COMPACT_VIEW},
-    {"ThumbnailView", NULL, N_("_Thumbnail View"), "<Ctrl>3", NULL, FM_FV_THUMBNAIL_VIEW},
-    {"ListView", NULL, N_("Detailed _List View"), "<Ctrl>4", NULL, FM_FV_LIST_VIEW},
-};
-#endif
-
 static GtkRadioActionEntry main_win_sort_type_actions[]=
 {
     {"Asc", GTK_STOCK_SORT_ASCENDING, NULL, NULL, NULL, GTK_SORT_ASCENDING},
@@ -407,30 +355,12 @@ static GtkRadioActionEntry main_win_sort_type_actions[]=
 
 static GtkRadioActionEntry main_win_sort_by_actions[]=
 {
-#if FM_CHECK_VERSION(1, 0, 2)
     {"ByName", NULL, N_("By _Name"), "<Alt><Ctrl>1", NULL, FM_FOLDER_MODEL_COL_NAME},
     {"ByMTime", NULL, N_("By _Modification Time"), "<Alt><Ctrl>2", NULL, FM_FOLDER_MODEL_COL_MTIME},
     {"BySize", NULL, N_("By _Size"), "<Alt><Ctrl>3", NULL, FM_FOLDER_MODEL_COL_SIZE},
     {"ByType", NULL, N_("By File _Type"), "<Alt><Ctrl>4", NULL, FM_FOLDER_MODEL_COL_DESC},
-#if FM_CHECK_VERSION(1, 2, 0)
     {"ByExt", NULL, N_("By _Extension"), "<Alt><Ctrl>5", NULL, FM_FOLDER_MODEL_COL_EXT}
-#endif
-#else
-    {"ByName", NULL, N_("By _Name"), "<Alt><Ctrl>1", NULL, COL_FILE_NAME},
-    {"ByMTime", NULL, N_("By _Modification Time"), "<Alt><Ctrl>2", NULL, COL_FILE_MTIME},
-    {"BySize", NULL, N_("By _Size"), "<Alt><Ctrl>3", NULL, COL_FILE_SIZE},
-    {"ByType", NULL, N_("By File _Type"), "<Alt><Ctrl>4", NULL, COL_FILE_DESC}
-#endif
 };
-
-#if !FM_CHECK_VERSION(1, 2, 0)
-static GtkRadioActionEntry main_win_side_bar_mode_actions[]=
-{
-    {"Places", NULL, N_("Places"), "<Ctrl>6", NULL, FM_SP_PLACES},
-    {"DirTree", NULL, N_("Directory Tree"), "<Ctrl>7", NULL, FM_SP_DIR_TREE},
-    {"Remote", NULL, N_("Remote"), "<Ctrl>8", NULL, FM_SP_REMOTE},
-};
-#endif
 
 static GtkRadioActionEntry main_win_path_bar_mode_actions[]=
 {

@@ -62,19 +62,12 @@ struct _FmTabPage
     char* status_text[FM_STATUS_TEXT_NUM];
     FmFolder* folder;
     FmDndDest *dd; /* handler for drop on label */
-#if FM_CHECK_VERSION(1, 2, 0)
     FmPath *want_focus;
-#endif
     /* Use sort_type, sort_by, show_hidden to setup model after folder loading */
-#if FM_CHECK_VERSION(1, 0, 2)
     FmSortMode sort_type;
     FmFolderModelCol sort_by;
     char **columns; /* NULL if own_config is FALSE */
     char *filter_pattern;
-#else
-    GtkSortType sort_type;
-    int sort_by;
-#endif
     guint view_mode;
     gboolean show_hidden : 1;
     gboolean show_thumbs : 1;
@@ -125,11 +118,7 @@ void fm_tab_page_forward(FmTabPage* page);
 void fm_tab_page_back(FmTabPage* page);
 
 /* jump to specified history item */
-#if FM_CHECK_VERSION(1, 0, 2)
 void fm_tab_page_history(FmTabPage* page, guint history_item);
-#else
-void fm_tab_page_history(FmTabPage* page, GList* history_item_link);
-#endif
 
 /* get window title of this page */
 const char* fm_tab_page_get_title(FmTabPage* page);
@@ -142,15 +131,11 @@ gboolean fm_tab_page_take_view_back(FmTabPage *page);
 gboolean fm_tab_page_set_passive_view(FmTabPage *page, FmFolderView *view, gboolean on_right);
 FmFolderView *fm_tab_page_get_passive_view(FmTabPage *page);
 
-#if FM_CHECK_VERSION(1, 0, 2)
 void fm_tab_page_set_filter_pattern(FmTabPage *page, const char *pattern);
-#endif
 
-#if FM_CHECK_VERSION(1, 2, 0)
 #include "pcmanfm-modules.h"
 
 extern GList *_tab_page_modules; /* in pcmanfm.c */
-#endif
 
 G_END_DECLS
 

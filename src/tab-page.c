@@ -90,9 +90,7 @@ static void on_folder_content_changed(FmFolder* folder, FmTabPage* page);
 static FmJobErrorAction on_folder_error(FmFolder* folder, GError* err, FmJobErrorSeverity severity, FmTabPage* page);
 
 static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* page);
-#if FM_CHECK_VERSION(1, 2, 0)
 static void  on_folder_view_columns_changed(FmFolderView *fv, FmTabPage *page);
-#endif
 static gboolean on_folder_view_focus_in(GtkWidget *widget, GdkEvent *event, FmTabPage *page);
 static char* format_status_text(FmTabPage* page);
 
@@ -168,9 +166,7 @@ static void fm_tab_page_finalize(GObject *object)
     for(i = 0; i < FM_STATUS_TEXT_NUM; ++i)
         g_free(page->status_text[i]);
 
-#if FM_CHECK_VERSION(1, 0, 2)
     g_free(page->filter_pattern);
-#endif
 
     G_OBJECT_CLASS(fm_tab_page_parent_class)->finalize(object);
 }
@@ -194,11 +190,9 @@ static void free_folder(FmTabPage* page)
         g_signal_handlers_disconnect_by_func(page->folder, on_folder_unmount, page);
         g_object_unref(page->folder);
         page->folder = NULL;
-#if FM_CHECK_VERSION(1, 2, 0)
         if (page->want_focus)
             fm_path_unref(page->want_focus);
         page->want_focus = NULL;
-#endif
     }
 }
 
@@ -244,7 +238,6 @@ static void _disconnect_focus_in(FmFolderView *folder_view, FmTabPage *page)
     g_list_free(children);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void on_home_path_changed(FmAppConfig *cfg, FmSidePane *sp)
 {
     if (cfg->home_path && cfg->home_path[0])
@@ -252,7 +245,6 @@ static void on_home_path_changed(FmAppConfig *cfg, FmSidePane *sp)
     else
         fm_side_pane_set_home_dir(sp, fm_get_home_dir());
 }
-#endif
 
 void fm_tab_page_destroy(GtkWidget *object)
 {
@@ -286,28 +278,20 @@ void fm_tab_page_destroy(GtkWidget *object)
         }
 
         g_signal_handlers_disconnect_by_func(page->folder_view, on_folder_view_sel_changed, page);
-#if FM_CHECK_VERSION(1, 2, 0)
         g_signal_handlers_disconnect_by_func(page->folder_view, on_folder_view_columns_changed, page);
-#endif
-#if FM_CHECK_VERSION(1, 2, 0)
         g_signal_handlers_disconnect_by_func(app_config, on_home_path_changed, page->side_pane);
-#endif
         _disconnect_focus_in(page->folder_view, page);
         g_object_unref(page->folder_view);
         page->folder_view = NULL;
     }
-#if FM_CHECK_VERSION(1, 0, 2)
     g_strfreev(page->columns);
     page->columns = NULL;
-#endif
     if(page->update_scroll_id)
     {
         g_source_remove(page->update_scroll_id);
         page->update_scroll_id = 0;
     }
-#if FM_CHECK_VERSION(1, 2, 0)
     fm_side_pane_set_popup_updater(page->side_pane, NULL, NULL);
-#endif
     if (page->dd)
     {
         g_object_unref(page->dd);
@@ -343,9 +327,7 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
             FmFileInfoList* files = fm_folder_view_dup_selected_files(fv);
             FmFileInfo* fi = fm_file_info_list_peek_head(files);
             const char* size_str = fm_file_info_get_disp_size(fi);
-#if FM_CHECK_VERSION(1, 2, 0)
             GList *l;
-#endif
             if(size_str)
             {
                 g_string_printf(str, "\"%s\" (%s) %s",
@@ -359,7 +341,6 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
                             fm_file_info_get_disp_name(fi),
                             fm_file_info_get_desc(fi));
             }
-#if FM_CHECK_VERSION(1, 2, 0)
             /* ---- statusbar plugins support ---- */
             CHECK_MODULES();
             for (l = _tab_page_modules; l; l = l->next)
@@ -373,7 +354,6 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
                 }
                 g_free(message);
             }
-#endif
             fm_file_info_list_unref(files);
         }
         else
@@ -406,7 +386,6 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
                                         fm_config->si_unit);
                     g_string_append_printf(str, " (%s)", size_str);
                 }
-#if FM_CHECK_VERSION(1, 2, 0)
                 /* ---- statusbar plugins support ---- */
                 CHECK_MODULES();
                 for (l = _tab_page_modules; l; l = l->next)
@@ -420,7 +399,6 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
                     }
                     g_free(message);
                 }
-#endif
                 fm_file_info_list_unref(files);
             }
             /* FIXME: can we show some more info on selection?
@@ -435,7 +413,6 @@ static void on_folder_view_sel_changed(FmFolderView* fv, gint n_sel, FmTabPage* 
                   (guint)FM_STATUS_TEXT_SELECTED_FILES, msg);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void  on_folder_view_columns_changed(FmFolderView *fv, FmTabPage *page)
 {
     GSList *columns = fm_folder_view_get_columns(fv), *l;
@@ -474,7 +451,6 @@ static void  on_folder_view_columns_changed(FmFolderView *fv, FmTabPage *page)
         pcmanfm_save_config(FALSE);
     }
 }
-#endif
 
 static gboolean on_folder_view_focus_in(GtkWidget *widget, GdkEvent *event, FmTabPage *page)
 {
@@ -535,7 +511,6 @@ static void _tab_unset_busy_cursor(FmTabPage* page)
         fm_unset_busy_cursor(GTK_WIDGET(page));
 }
 
-#if FM_CHECK_VERSION(1, 0, 2)
 static gboolean fm_tab_page_path_filter(FmFileInfo *file, gpointer user_data)
 {
     FmTabPage *page;
@@ -555,7 +530,6 @@ static gboolean fm_tab_page_path_filter(FmFileInfo *file, gpointer user_data)
     g_free(key);
     return result;
 }
-#endif
 
 static void on_folder_start_loading(FmFolder* folder, FmTabPage* page)
 {
@@ -564,7 +538,6 @@ static void on_folder_start_loading(FmFolder* folder, FmTabPage* page)
     /* FIXME: this should be set on toplevel parent */
     _tab_set_busy_cursor(page);
 
-#if FM_CHECK_VERSION(1, 0, 2)
     if(fm_folder_is_incremental(folder))
     {
         /* create a model for the folder and set it to the view
@@ -581,7 +554,6 @@ static void on_folder_start_loading(FmFolder* folder, FmTabPage* page)
         g_object_unref(model);
     }
     else
-#endif
         fm_folder_view_set_model(fv, NULL);
 }
 
@@ -589,22 +561,12 @@ static gboolean update_scroll(gpointer data)
 {
     FmTabPage* page = data;
     GtkScrolledWindow* scroll;
-#if !FM_CHECK_VERSION(1, 0, 2)
-    const FmNavHistoryItem* item;
-#endif
 
     if (g_source_is_destroyed(g_main_current_source()))
         return FALSE;
     scroll = GTK_SCROLLED_WINDOW(page->folder_view);
-#if !FM_CHECK_VERSION(1, 0, 2)
-    item = fm_nav_history_get_cur(page->nav_history);
-    /* scroll to recorded position */
-    gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(scroll), item->scroll_pos);
-#else
     gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(scroll),
                              fm_nav_history_get_scroll_pos(page->nav_history));
-#endif
-#if FM_CHECK_VERSION(1, 2, 0)
     if (page->want_focus)
     {
         fm_folder_view_select_file_path(page->folder_view, page->want_focus);
@@ -612,7 +574,6 @@ static gboolean update_scroll(gpointer data)
         fm_path_unref(page->want_focus);
         page->want_focus = NULL;
     }
-#endif
     page->update_scroll_id = 0;
     return FALSE;
 }
@@ -633,7 +594,6 @@ static void on_folder_finish_loading(FmFolder* folder, FmTabPage* page)
         /* create a model for the folder and set it to the view */
         FmFolderModel* model = fm_folder_model_new(folder, page->show_hidden);
         fm_folder_view_set_model(fv, model);
-#if FM_CHECK_VERSION(1, 0, 2)
         if (page->filter_pattern)
         {
             fm_folder_model_add_filter(model, fm_tab_page_path_filter, page);
@@ -641,7 +601,6 @@ static void on_folder_finish_loading(FmFolder* folder, FmTabPage* page)
         }
         /* since 1.0.2 sorting should be applied on model instead of view */
         fm_folder_model_set_sort(model, page->sort_by, page->sort_type);
-#endif
         g_object_unref(model);
     }
     fm_folder_query_filesystem_info(folder); /* FIXME: is this needed? */
@@ -670,7 +629,6 @@ static void on_folder_unmount(FmFolder* folder, FmTabPage* page)
     if (app_config->close_on_unmount)
         gtk_widget_destroy(GTK_WIDGET(page));
     else
-#if FM_CHECK_VERSION(1, 2, 0)
     if (app_config->home_path && app_config->home_path[0])
     {
         FmPath *path = fm_path_new_for_str(app_config->home_path);
@@ -679,7 +637,6 @@ static void on_folder_unmount(FmFolder* folder, FmTabPage* page)
         fm_path_unref(path);
     }
     else
-#endif
         fm_tab_page_chdir(page, fm_path_get_home());
 }
 
@@ -688,7 +645,6 @@ static void on_folder_removed(FmFolder* folder, FmTabPage* page)
     if (app_config->close_on_unmount)
         gtk_widget_destroy(GTK_WIDGET(page));
     else
-#if FM_CHECK_VERSION(1, 2, 0)
     if (app_config->home_path && app_config->home_path[0])
     {
         FmPath *path = fm_path_new_for_str(app_config->home_path);
@@ -697,7 +653,6 @@ static void on_folder_removed(FmFolder* folder, FmTabPage* page)
         fm_path_unref(path);
     }
     else
-#endif
         fm_tab_page_chdir(page, fm_path_get_home());
 }
 
@@ -834,7 +789,6 @@ static gboolean open_folder_func(GAppLaunchContext* ctx, GList* folder_infos, gp
     return TRUE;
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 void _update_sidepane_popup(FmSidePane* sp, GtkUIManager* ui,
                             GtkActionGroup* act_grp,
                             FmFileInfo* file, gpointer user_data)
@@ -863,7 +817,6 @@ void _update_sidepane_popup(FmSidePane* sp, GtkUIManager* ui,
     if (!pcmanfm_can_open_path_in_terminal(fm_file_info_get_path(file)))
         gtk_action_set_visible(gtk_action_group_get_action(act_grp, "Term"), FALSE);
 }
-#endif
 
 static gboolean on_drag_motion(FmTabLabel *label, GdkDragContext *drag_context,
                                gint x, gint y, guint time, FmTabPage *page)
@@ -906,13 +859,11 @@ static void fm_tab_page_init(FmTabPage *page)
         if (fm_config->cutdown_places) fm_side_pane_set_mode(page->side_pane, FM_SP_HYBRID);
         else fm_side_pane_set_mode(page->side_pane, FM_SP_DIR_TREE);
     }
-#if FM_CHECK_VERSION(1, 2, 0)
     fm_side_pane_set_popup_updater(page->side_pane, _update_sidepane_popup, page);
     if (app_config->home_path && app_config->home_path[0])
         fm_side_pane_set_home_dir(page->side_pane, app_config->home_path);
     g_signal_connect(app_config, "changed::home_path",
                      G_CALLBACK(on_home_path_changed), page->side_pane);
-#endif
     /* TODO: add a close button to side pane */
     gtk_paned_add1(paned, GTK_WIDGET(page->side_pane));
     focus_chain = g_list_prepend(focus_chain, page->side_pane);
@@ -959,10 +910,8 @@ static void fm_tab_page_init(FmTabPage *page)
 
     g_signal_connect(folder_view, "sel-changed",
                      G_CALLBACK(on_folder_view_sel_changed), page);
-#if FM_CHECK_VERSION(1, 2, 0)
     g_signal_connect(folder_view, "columns-changed",
                      G_CALLBACK(on_folder_view_columns_changed), page);
-#endif
     _connect_focus_in(folder_view, page);
     /*
     g_signal_connect(page->folder_view, "chdir",
@@ -998,11 +947,8 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
     FmStandardViewMode view_mode;
     gboolean show_hidden;
     char **columns; /* unused with libfm < 1.0.2 */
-#if FM_CHECK_VERSION(1, 2, 0)
     FmPath *prev_path = NULL;
-#endif
 
-#if FM_CHECK_VERSION(1, 0, 2)
     if (page->filter_pattern && page->filter_pattern[0])
     {
         /* include pattern into page title */
@@ -1010,11 +956,9 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
         g_free(disp_name);
         disp_name = text;
     }
-#endif
     fm_tab_label_set_text(page->tab_label, disp_name);
     g_free(disp_name);
 
-#if FM_CHECK_VERSION(1, 2, 0)
     if (app_config->focus_previous && page->folder)
     {
         prev_path = fm_folder_get_path(page->folder);
@@ -1023,7 +967,6 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
         else
             prev_path = NULL;
     }
-#endif
 
     disp_path = fm_path_display_name(path, FALSE);
     fm_tab_label_set_tooltip_text(FM_TAB_LABEL(page->tab_label), disp_path);
@@ -1041,9 +984,7 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
     g_signal_connect(page->folder, "unmount", G_CALLBACK(on_folder_unmount), page);
     g_signal_connect(page->folder, "content-changed", G_CALLBACK(on_folder_content_changed), page);
 
-#if FM_CHECK_VERSION(1, 2, 0)
     page->want_focus = prev_path;
-#endif
 
     /* get sort and view modes for new path */
     page->own_config = fm_app_config_get_config_for_path(path, &page->sort_type,
@@ -1060,9 +1001,7 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
                                     g_quark_try_string("filter-changed"), NULL, NULL, NULL);
     on_folder_start_loading(page->folder, page);
     fm_folder_view_set_show_hidden(page->folder_view, show_hidden);
-#if FM_CHECK_VERSION(1, 2, 0)
     fm_side_pane_set_show_hidden(page->side_pane, show_hidden);
-#endif
     g_signal_handlers_unblock_matched(page->folder_view, G_SIGNAL_MATCH_DETAIL, 0,
                                       g_quark_try_string("filter-changed"), NULL, NULL, NULL);
 
@@ -1074,7 +1013,6 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
 
     /* change view and sort modes according to new path */
     fm_standard_view_set_mode(FM_STANDARD_VIEW(page->folder_view), view_mode);
-#if FM_CHECK_VERSION(1, 0, 2)
     /* update columns from config */
     if (columns)
     {
@@ -1086,39 +1024,27 @@ static void fm_tab_page_chdir_without_history(FmTabPage* page, FmPath* path)
         {
             char *name = g_strdup(columns[i]), *delim;
 
-#if FM_CHECK_VERSION(1, 2, 0)
             infos[i].width = 0;
-#endif
             delim = strchr(name, ':');
             if (delim)
             {
                 *delim++ = '\0';
-#if FM_CHECK_VERSION(1, 2, 0)
                 infos[i].width = atoi(delim);
-#endif
             }
             infos[i].col_id = fm_folder_model_get_col_by_name(name);
             g_free(name);
             infos_list = g_slist_append(infos_list, &infos[i]);
         }
-#if FM_CHECK_VERSION(1, 2, 0)
         g_signal_handlers_block_by_func(page->folder_view,
                                         on_folder_view_columns_changed, page);
-#endif
         fm_folder_view_set_columns(page->folder_view, infos_list);
-#if FM_CHECK_VERSION(1, 2, 0)
         g_signal_handlers_unblock_by_func(page->folder_view,
                                           on_folder_view_columns_changed, page);
-#endif
         g_slist_free(infos_list);
         g_free(infos);
         if (page->own_config)
             page->columns = g_strdupv(columns);
     }
-#else
-    /* since 1.0.2 sorting should be applied on model instead */
-    fm_folder_view_sort(page->folder_view, page->sort_type, page->sort_by);
-#endif
 
     fm_side_pane_chdir(page->side_pane, path);
 
@@ -1140,9 +1066,7 @@ void fm_tab_page_chdir(FmTabPage* page, FmPath* path)
 void fm_tab_page_set_show_hidden(FmTabPage* page, gboolean show_hidden)
 {
     fm_folder_view_set_show_hidden(page->folder_view, show_hidden);
-#if FM_CHECK_VERSION(1, 2, 0)
     fm_side_pane_set_show_hidden(page->side_pane, show_hidden);
-#endif
     /* update status text */
     g_free(page->status_text[FM_STATUS_TEXT_NORMAL]);
     page->status_text[FM_STATUS_TEXT_NORMAL] = format_status_text(page);
@@ -1187,27 +1111,14 @@ FmNavHistory* fm_tab_page_get_history(FmTabPage* page)
 
 void fm_tab_page_forward(FmTabPage* page)
 {
-#if FM_CHECK_VERSION(1, 0, 2)
     guint index = fm_nav_history_get_cur_index(page->nav_history);
 
     if (index > 0)
-#else
-    if(fm_nav_history_can_forward(page->nav_history))
-#endif
     {
-#if !FM_CHECK_VERSION(1, 0, 2)
-        const FmNavHistoryItem* item;
-#endif
         GtkAdjustment* vadjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(page->folder_view));
         int scroll_pos = gtk_adjustment_get_value(vadjustment);
-#if FM_CHECK_VERSION(1, 0, 2)
         FmPath *path = fm_nav_history_go_to(page->nav_history, index - 1, scroll_pos);
         fm_tab_page_chdir_without_history(page, path);
-#else
-        fm_nav_history_forward(page->nav_history, scroll_pos);
-        item = fm_nav_history_get_cur(page->nav_history);
-        fm_tab_page_chdir_without_history(page, item->path);
-#endif
     }
 }
 
@@ -1215,24 +1126,14 @@ void fm_tab_page_back(FmTabPage* page)
 {
     if(fm_nav_history_can_back(page->nav_history))
     {
-#if !FM_CHECK_VERSION(1, 0, 2)
-        const FmNavHistoryItem* item;
-#endif
         GtkAdjustment* vadjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(page->folder_view));
         int scroll_pos = gtk_adjustment_get_value(vadjustment);
-#if FM_CHECK_VERSION(1, 0, 2)
         guint index = fm_nav_history_get_cur_index(page->nav_history);
         FmPath *path = fm_nav_history_go_to(page->nav_history, index + 1, scroll_pos);
         fm_tab_page_chdir_without_history(page, path);
-#else
-        fm_nav_history_back(page->nav_history, scroll_pos);
-        item = fm_nav_history_get_cur(page->nav_history);
-        fm_tab_page_chdir_without_history(page, item->path);
-#endif
     }
 }
 
-#if FM_CHECK_VERSION(1, 0, 2)
 void fm_tab_page_history(FmTabPage* page, guint history_item)
 {
     GtkAdjustment* vadjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(page->folder_view));
@@ -1240,17 +1141,6 @@ void fm_tab_page_history(FmTabPage* page, guint history_item)
     FmPath *path = fm_nav_history_go_to(page->nav_history, history_item, scroll_pos);
     fm_tab_page_chdir_without_history(page, path);
 }
-#else
-void fm_tab_page_history(FmTabPage* page, GList* history_item_link)
-{
-    const FmNavHistoryItem* item = (FmNavHistoryItem*)history_item_link->data;
-    GtkAdjustment* vadjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(page->folder_view));
-    int scroll_pos = gtk_adjustment_get_value(vadjustment);
-    fm_nav_history_jump(page->nav_history, history_item_link, scroll_pos);
-    item = fm_nav_history_get_cur(page->nav_history);
-    fm_tab_page_chdir_without_history(page, item->path);
-}
-#endif
 
 const char* fm_tab_page_get_title(FmTabPage* page)
 {
@@ -1272,14 +1162,8 @@ void fm_tab_page_reload(FmTabPage* page)
         GtkAdjustment* vadjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(page->folder_view));
         int scroll_pos = gtk_adjustment_get_value(vadjustment);
         /* save the scroll position before reload */
-#if FM_CHECK_VERSION(1, 0, 2)
         int idx = fm_nav_history_get_cur_index(page->nav_history);
         fm_nav_history_go_to(page->nav_history, idx, scroll_pos);
-#else
-        FmNavHistoryItem* item = (FmNavHistoryItem*)fm_nav_history_get_cur(page->nav_history);
-        /* NOTE: ignoring const modifier due to invalid pre-1.0.2 design */
-        item->scroll_pos = scroll_pos;
-#endif
         fm_folder_reload(folder);
     }
 }
@@ -1342,15 +1226,6 @@ gboolean fm_tab_page_set_passive_view(FmTabPage *page, FmFolderView *view,
     g_return_val_if_fail(page != NULL && view != NULL, FALSE);
     if (!fm_tab_page_take_view_back(page))
     {
-#if !FM_CHECK_VERSION(1, 2, 0)
-        /* workaround on ExoIconView bug - it doesn't follow state change
-           so we re-add the folder view into our container to force change */
-        GtkWidget *fv = GTK_WIDGET(page->folder_view);
-
-        /* we already keep the reference, no need to do it again */
-        gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(fv)), fv);
-        gtk_box_pack_start(page->views, fv, TRUE, TRUE, 0);
-#endif
     }
     pane = GTK_WIDGET(view);
     gtk_widget_set_state(pane, GTK_STATE_ACTIVE);
@@ -1388,7 +1263,6 @@ FmFolderView *fm_tab_page_get_passive_view(FmTabPage *page)
     return view;
 }
 
-#if FM_CHECK_VERSION(1, 0, 2)
 /**
  * fm_tab_page_set_filter_pattern
  * @page: the page instance
@@ -1442,4 +1316,3 @@ void fm_tab_page_set_filter_pattern(FmTabPage *page, const char *pattern)
     fm_tab_label_set_text(page->tab_label, disp_name);
     g_free(disp_name);
 }
-#endif

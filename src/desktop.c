@@ -44,12 +44,6 @@
 #include "pref.h"
 #include "main-win.h"
 
-/* compatibility with LibFM < 1.0.2 */
-#if !FM_CHECK_VERSION(1, 0, 2)
-# define FM_FOLDER_MODEL_COL_INFO COL_FILE_INFO
-# define FM_FOLDER_MODEL_COL_ICON COL_FILE_ICON
-#endif
-
 #define SPACING 2
 #define PADDING 6
 #define MARGIN  2
@@ -149,18 +143,14 @@ static void on_open_folder_in_terminal(GtkAction* act, gpointer user_data);
 static void on_fix_pos(GtkToggleAction* act, gpointer user_data);
 static void on_snap_to_grid(GtkAction* act, gpointer user_data);
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void on_disable(GtkAction* act, gpointer user_data);
-#endif
 
 /* insert GtkUIManager XML definitions */
 #include "desktop-ui.c"
 
-#if FM_CHECK_VERSION(1, 2, 0)
 /* ---------------------------------------------------------------------
     mounts handlers */
 
-#if FM_CHECK_VERSION(1, 2, 0)
 typedef struct
 {
     GMount *mount; /* NULL for non-mounts */
@@ -176,7 +166,6 @@ static FmDesktopExtraItem *trash_can = NULL;
 
 /* under GDK lock */
 static GSList *mounts = NULL;
-#endif
 
 
 gboolean is_wizard (void)
@@ -411,13 +400,10 @@ static char* get_sys_config_file (FmDesktop* desktop)
 static inline FmDesktopItem* desktop_item_new(FmFolderModel* model, GtkTreeIter* it)
 {
     FmDesktopItem* item = g_slice_new0(FmDesktopItem);
-#if FM_CHECK_VERSION(1, 2, 0)
     GSList *sl;
-#endif
     fm_folder_model_set_item_userdata(model, it, item);
     gtk_tree_model_get(GTK_TREE_MODEL(model), it, FM_FOLDER_MODEL_COL_INFO, &item->fi, -1);
     fm_file_info_ref(item->fi);
-#if FM_CHECK_VERSION(1, 2, 0)
     if ((trash_can && trash_can->fi == item->fi) ||
         (documents && documents->fi == item->fi))
         item->is_special = TRUE;
@@ -428,7 +414,6 @@ static inline FmDesktopItem* desktop_item_new(FmFolderModel* model, GtkTreeIter*
             item->is_mount = TRUE;
             break;
         }
-#endif
     return item;
 }
 
@@ -772,11 +757,9 @@ static void copy_desktop_config(FmDesktopConfig *dst, FmDesktopConfig *src)
     dst->desktop_sort_type = src->desktop_sort_type;
     dst->desktop_sort_by = src->desktop_sort_by;
     dst->folder = g_strdup(src->folder);
-#if FM_CHECK_VERSION(1, 2, 0)
     dst->show_documents = src->show_documents;
     dst->show_trash = src->show_trash;
     dst->show_mounts = src->show_mounts;
-#endif
 
 }
 
@@ -1050,7 +1033,6 @@ static FmDesktopExtraItem *_add_extra_item(const char *path_str)
     }
     return item;
 }
-#endif
 
 /* ---------------------------------------------------------------------
     accessibility handlers */
@@ -2803,18 +2785,6 @@ static void fm_desktop_update_popup(FmFolderView* fv, GtkWindow* window,
     act = gtk_action_group_get_action(act_grp, "Prop");
     gtk_action_set_visible(act, FALSE);
     //gtk_action_group_remove_action(act_grp, act);
-#if !FM_CHECK_VERSION(1, 2, 0)
-    if(fm_folder_view_get_model(fv) == NULL)
-    {
-        /* hide folder-oriented actions if there is no folder */
-        act = gtk_action_group_get_action(act_grp, "SelAll");
-        gtk_action_set_visible(act, FALSE);
-        act = gtk_action_group_get_action(act_grp, "InvSel");
-        gtk_action_set_visible(act, FALSE);
-        act = gtk_action_group_get_action(act_grp, "Sort");
-        gtk_action_set_visible(act, FALSE);
-    }
-#endif
     gtk_action_group_set_translation_domain(act_grp, NULL);
     gtk_action_group_add_actions(act_grp, desktop_actions,
                                  G_N_ELEMENTS(desktop_actions), window);
@@ -2830,9 +2800,7 @@ static void fm_desktop_update_item_popup(FmFolderView* fv, GtkWindow* window,
     GtkAction* act;
     gboolean all_fixed = TRUE, has_fixed = FALSE;
     gboolean all_native = TRUE;
-#if FM_CHECK_VERSION(1, 2, 0)
     gboolean has_extra = FALSE, has_mount = FALSE;
-#endif
 
     sel_items = get_selected_items(FM_DESKTOP(fv), NULL);
     for(l = sel_items; l; l=l->next)
@@ -2844,12 +2812,10 @@ static void fm_desktop_update_item_popup(FmFolderView* fv, GtkWindow* window,
             all_fixed = FALSE;
         if (!pcmanfm_can_open_path_in_terminal(fm_file_info_get_path(item->fi)))
             all_native = FALSE;
-#if FM_CHECK_VERSION(1, 2, 0)
         if (item->is_special)
             has_extra = TRUE;
         if (item->is_mount)
             has_mount = TRUE;
-#endif
     }
     g_list_free(sel_items);
 
@@ -2869,7 +2835,6 @@ static void fm_desktop_update_item_popup(FmFolderView* fv, GtkWindow* window,
         act = gtk_action_group_get_action(act_grp, "Term");
         gtk_action_set_visible(act, all_native);
     }
-#if FM_CHECK_VERSION(1, 2, 0)
     if (has_extra)
     {
         if (fm_file_info_list_get_length(files) == 1)
@@ -2891,7 +2856,6 @@ static void fm_desktop_update_item_popup(FmFolderView* fv, GtkWindow* window,
         act = gtk_action_group_get_action(act_grp, "Rename");
         gtk_action_set_visible(act, FALSE);
     }
-#endif
 
     /* merge desktop icon specific items */
     gtk_action_group_add_actions(act_grp, desktop_icon_actions,
@@ -2966,7 +2930,6 @@ static void on_fix_pos(GtkToggleAction* act, gpointer user_data)
     queue_config_save(desktop);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void on_disable(GtkAction* act, gpointer user_data)
 {
     FmDesktop *desktop = FM_DESKTOP(user_data);
@@ -2990,7 +2953,6 @@ static void on_disable(GtkAction* act, gpointer user_data)
     queue_config_save(desktop);
     fm_folder_model_extra_file_remove(desktop->model, item->fi);
 }
-#endif
 
 /* round() is only available in C99. Don't use it now for portability. */
 static inline double _round(double x)
@@ -3380,11 +3342,9 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
     self->xmargin = self->ymargin = MARGIN;
     self->text_h = font_h * 2;
     self->text_w = font_w * 15; // enough for "Wastebasket"...
-#if FM_CHECK_VERSION(1, 2, 0)
     if (fm_config->show_full_names)
         self->pango_text_h = -1;
     else
-#endif
         self->pango_text_h = self->text_h * PANGO_SCALE;
     self->pango_text_w = self->text_w * PANGO_SCALE;
     self->text_h += 4;
@@ -3716,13 +3676,9 @@ static gboolean on_motion_notify(GtkWidget* w, GdkEventMotion* evt)
                 {
                     redraw_item(self, item);
                     gdk_window_set_cursor(window, hand_cursor);
-#if FM_CHECK_VERSION(1, 2, 0)
                     if(fm_config->auto_selection_delay > 0)
                         self->single_click_timeout_handler = gdk_threads_add_timeout(fm_config->auto_selection_delay,
                                                                                      on_single_click_timeout, self);
-#else
-                    self->single_click_timeout_handler = gdk_threads_add_timeout(400, on_single_click_timeout, self); //400 ms
-#endif
                         /* Making a loop to aviod the selection of the item */
                         /* on_single_click_timeout(self); */
                 }
@@ -4743,7 +4699,6 @@ static FmJobErrorAction on_folder_error(FmFolder* folder, GError* err, FmJobErro
 /* ---------------------------------------------------------------------
     FmDesktop class main handlers */
 
-#if FM_CHECK_VERSION(1, 0, 2)
 static void on_sort_changed(GtkTreeSortable *model, FmDesktop *desktop)
 {
     FmFolderModelCol by;
@@ -4759,7 +4714,6 @@ static void on_sort_changed(GtkTreeSortable *model, FmDesktop *desktop)
     desktop->conf.desktop_sort_by = by;
     queue_config_save(desktop);
 }
-#endif
 
 static inline void connect_model(FmDesktop *desktop, FmFolder *folder)
 {
@@ -4775,15 +4729,9 @@ static inline void connect_model(FmDesktop *desktop, FmFolder *folder)
     g_signal_connect(desktop->model, "row-deleted", G_CALLBACK(on_row_deleted), desktop);
     g_signal_connect(desktop->model, "row-changed", G_CALLBACK(on_row_changed), desktop);
     g_signal_connect(desktop->model, "rows-reordered", G_CALLBACK(on_rows_reordered), desktop);
-#if FM_CHECK_VERSION(1, 0, 2)
     fm_folder_model_set_sort(desktop->model, desktop->conf.desktop_sort_by,
                              desktop->conf.desktop_sort_type);
     g_signal_connect(desktop->model, "sort-column-changed", G_CALLBACK(on_sort_changed), desktop);
-#else
-    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(desktop->model),
-                                         desktop->conf.desktop_sort_by,
-                                         desktop->conf.desktop_sort_type);
-#endif
     on_folder_start_loading(folder, desktop);
     if(fm_folder_is_loaded(folder))
         on_folder_finish_loading(folder, desktop);
@@ -4805,9 +4753,7 @@ static inline void disconnect_model(FmDesktop* desktop)
     g_signal_handlers_disconnect_by_func(desktop->model, on_row_deleted, desktop);
     g_signal_handlers_disconnect_by_func(desktop->model, on_row_changed, desktop);
     g_signal_handlers_disconnect_by_func(desktop->model, on_rows_reordered, desktop);
-#if FM_CHECK_VERSION(1, 0, 2)
     g_signal_handlers_disconnect_by_func(desktop->model, on_sort_changed, desktop);
-#endif
     g_object_unref(desktop->model);
     desktop->model = NULL;
     fm_desktop_accessible_model_removed(desktop);
@@ -4816,7 +4762,6 @@ static inline void disconnect_model(FmDesktop* desktop)
                              fm_desktop_update_popup);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void on_show_full_names_changed(FmConfig *cfg, FmDesktop *self)
 {
     if (fm_config->show_full_names)
@@ -4831,7 +4776,6 @@ static void on_show_full_names_changed(FmConfig *cfg, FmDesktop *self)
     }
     queue_layout_items(self);
 }
-#endif
 
 static void fm_desktop_destroy(GtkWidget *object)
 {
@@ -4845,9 +4789,7 @@ static void fm_desktop_destroy(GtkWidget *object)
         gdk_window_remove_filter(gdk_screen_get_root_window(screen), on_root_event, self);
 
         g_signal_handlers_disconnect_by_func(screen, on_screen_size_changed, self);
-#if FM_CHECK_VERSION(1, 2, 0)
         g_signal_handlers_disconnect_by_func(app_config, on_show_full_names_changed, self);
-#endif
 
         gtk_window_group_remove_window(win_group, (GtkWindow*)self);
 
@@ -4971,17 +4913,13 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     //pc = gtk_widget_get_pango_context((GtkWidget*)self);
     self->pl = gtk_widget_create_pango_layout((GtkWidget*)self, NULL);
     pango_layout_set_alignment(self->pl, PANGO_ALIGN_CENTER);
-#if FM_CHECK_VERSION(1, 2, 0)
     if (fm_config->show_full_names)
         pango_layout_set_ellipsize(self->pl, PANGO_ELLIPSIZE_NONE);
     else
-#endif
         pango_layout_set_ellipsize(self->pl, PANGO_ELLIPSIZE_END);
     pango_layout_set_wrap(self->pl, PANGO_WRAP_WORD_CHAR);
-#if FM_CHECK_VERSION(1, 2, 0)
     g_signal_connect(app_config, "changed::show_full_names",
                      G_CALLBACK(on_show_full_names_changed), self);
-#endif
 
     root = gdk_screen_get_root_window(screen);
     gdk_window_set_events(root, gdk_window_get_events(root)|GDK_PROPERTY_CHANGE_MASK);
@@ -4992,10 +4930,6 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
 
     /* init dnd support */
     self->dnd_src = fm_dnd_src_new((GtkWidget*)self);
-#if !FM_CHECK_VERSION(1, 2, 1)
-    /* override pre-1.2.1 handler from FmDndSrc to allow icon change */
-    g_signal_connect_after(self, "drag-begin", G_CALLBACK(on_drag_begin), NULL);
-#endif
     /* add our own targets */
     fm_dnd_src_add_targets((GtkWidget*)self, dnd_targets, G_N_ELEMENTS(dnd_targets));
     g_signal_connect(self->dnd_src, "data-get", G_CALLBACK(on_dnd_src_data_get), self);
@@ -5072,10 +5006,8 @@ static void fm_desktop_class_init(FmDesktopClass *klass)
     widget_class->drag_drop = on_drag_drop;
     widget_class->drag_data_received = on_drag_data_received;
     widget_class->drag_leave = on_drag_leave;
-#if FM_CHECK_VERSION(1, 2, 1)
     widget_class->drag_begin = on_drag_begin;
     widget_class->drag_end = on_drag_end;
-#endif
     /* widget_class->drag_data_get = on_drag_data_get; */
 
     if (!use_wayland)
@@ -5122,33 +5054,6 @@ static GtkSelectionMode _get_sel_mode(FmFolderView* fv)
 {
     return GTK_SELECTION_MULTIPLE;
 }
-
-#if !FM_CHECK_VERSION(1, 0, 2)
-static void _set_sort(FmFolderView* fv, GtkSortType type, FmFolderModelViewCol by)
-{
-    FmDesktop* desktop = FM_DESKTOP(fv);
-
-    if(type == (GtkSortType)desktop->conf.desktop_sort_type &&
-       by == (FmFolderModelViewCol)desktop->conf.desktop_sort_by)
-        return;
-    desktop->conf.desktop_sort_type = type;
-    desktop->conf.desktop_sort_by = by;
-    pcmanfm_save_config(FALSE);
-    if (desktop->model)
-        gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(desktop->model),
-                                             by, type);
-}
-
-static void _get_sort(FmFolderView* fv, GtkSortType* type, FmFolderModelViewCol* by)
-{
-    FmDesktop* desktop = FM_DESKTOP(fv);
-
-    if(type)
-        *type = desktop->conf.desktop_sort_type;
-    if(by)
-        *by = desktop->conf.desktop_sort_by;
-}
-#endif
 
 static void _set_show_hidden(FmFolderView* fv, gboolean show)
 {
@@ -5324,10 +5229,6 @@ static void fm_desktop_view_init(FmFolderViewInterface* iface)
 {
     iface->set_sel_mode = _set_sel_mode;
     iface->get_sel_mode = _get_sel_mode;
-#if !FM_CHECK_VERSION(1, 0, 2)
-    iface->set_sort = _set_sort;
-    iface->get_sort = _get_sort;
-#endif
     iface->set_show_hidden = _set_show_hidden;
     iface->get_show_hidden = _get_show_hidden;
     iface->get_folder = _get_folder;
@@ -5507,7 +5408,6 @@ static void on_desktop_folder_new_win_toggled(GtkToggleButton* btn, FmDesktop *d
     pcmanfm_save_config(FALSE);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 static void on_show_documents_toggled(GtkToggleButton* btn, FmDesktop *desktop)
 {
     gboolean new_val = gtk_toggle_button_get_active(btn);
@@ -5566,7 +5466,6 @@ static void on_show_mounts_toggled(GtkToggleButton* btn, FmDesktop *desktop)
         }
     }
 }
-#endif
 
 static void on_desktop_folder_set_toggled(GtkToggleButton *btn, GtkFileChooserButton *chooser)
 {
@@ -5587,9 +5486,7 @@ typedef struct
 {
     FmDesktop *desktop;
     GtkWidget *desktop_folder_box;
-#if FM_CHECK_VERSION(1, 2, 0)
     GtkWidget *icons_page;
-#endif
     gpointer chooser;
     guint timeout_handler;
 } FolderChooserData;
@@ -5653,9 +5550,7 @@ static void on_use_desktop_folder_toggled(GtkToggleButton *btn, FolderChooserDat
     gboolean active = gtk_toggle_button_get_active(btn);
 
     gtk_widget_set_sensitive(data->desktop_folder_box, active);
-#if FM_CHECK_VERSION(1, 2, 0)
     gtk_widget_set_visible(data->icons_page, active);
-#endif
     if (active)
         g_signal_emit_by_name(data->chooser, "file-set");
     else
@@ -5780,7 +5675,6 @@ void fm_desktop_preference(GtkAction *act, FmDesktop *desktop)
         item = gtk_builder_get_object(builder, "desktop_folder_new_win");
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), app_config->desktop_folder_new_win);
         g_signal_connect(item, "toggled", G_CALLBACK(on_desktop_folder_new_win_toggled), desktop);
-#if FM_CHECK_VERSION(1, 2, 0)
         item = gtk_builder_get_object(builder, "show_documents");
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item), desktop->conf.show_documents);
         gtk_widget_set_sensitive(GTK_WIDGET(item), documents != NULL);
@@ -5794,7 +5688,6 @@ void fm_desktop_preference(GtkAction *act, FmDesktop *desktop)
         g_signal_connect(item, "toggled", G_CALLBACK(on_show_mounts_toggled), desktop);
         data->icons_page = GTK_WIDGET(gtk_builder_get_object(builder, "icons_page"));
         gtk_widget_set_visible(data->icons_page, desktop->model != NULL);
-#endif
 
         g_signal_connect(desktop_pref_dlg, "response", G_CALLBACK(on_response), &desktop_pref_dlg);
         g_object_unref(builder);
@@ -5892,9 +5785,7 @@ void fm_desktop_manager_init(gint on_screen)
     GdkDisplay * gdpy;
     int i, n_mon, scr, mon;
     const char* desktop_path;
-#if FM_CHECK_VERSION(1, 2, 0)
     GFile *gf;
-#endif
 
     if(! win_group)
         win_group = gtk_window_group_new();
@@ -5945,15 +5836,9 @@ void fm_desktop_manager_init(gint on_screen)
                                          GTK_WINDOW(desktop),
                                          fm_desktop_update_popup);
             if (desktop->model)
-#if FM_CHECK_VERSION(1, 0, 2)
                 fm_folder_model_set_sort(desktop->model,
                                          desktop->conf.desktop_sort_by,
                                          desktop->conf.desktop_sort_type);
-#else
-                gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(desktop->model),
-                                                     desktop->conf.desktop_sort_by,
-                                                     desktop->conf.desktop_sort_type);
-#endif
             gtk_widget_show_all(widget);
             gdk_window_lower(gtk_widget_get_window(widget));
         }
@@ -5962,7 +5847,6 @@ void fm_desktop_manager_init(gint on_screen)
 
     hand_cursor = gdk_cursor_new_for_display (gdk_display_get_default (), GDK_HAND2);
 
-#if FM_CHECK_VERSION(1, 2, 0)
     /* create extra items */
     gf = fm_file_new_for_uri("trash:///");
     if (g_file_query_exists(gf, NULL))
@@ -5993,7 +5877,6 @@ void fm_desktop_manager_init(gint on_screen)
         g_signal_connect(vol_mon, "mount-added", G_CALLBACK(on_mount_added), NULL);
         g_signal_connect(vol_mon, "mount-removed", G_CALLBACK(on_mount_removed), NULL);
     }
-#endif
 
     pcmanfm_ref();
 }
@@ -6028,7 +5911,6 @@ void fm_desktop_manager_finalize()
         hand_cursor = NULL;
     }
 
-#if FM_CHECK_VERSION(1, 2, 0)
     if (G_LIKELY(documents))
     {
         _free_extra_item(documents);
@@ -6053,7 +5935,6 @@ void fm_desktop_manager_finalize()
         _free_extra_item(mounts->data);
         mounts = g_slist_delete_link(mounts, mounts);
     }
-#endif
 
     pcmanfm_unref();
 }

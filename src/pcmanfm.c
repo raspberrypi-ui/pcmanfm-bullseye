@@ -66,9 +66,7 @@ static gboolean reconfigure = FALSE;
 static char* set_wallpaper = NULL;
 static char* wallpaper_mode = NULL;
 static gboolean new_win = FALSE;
-#if FM_CHECK_VERSION(1, 0, 2)
 static gboolean find_files = FALSE;
-#endif
 static char* ipc_cwd = NULL;
 static char* window_role = NULL;
 gboolean use_wayland = FALSE;
@@ -93,9 +91,7 @@ static GOptionEntry opt_entries[] =
     { "wallpaper-mode", '\0', 0, G_OPTION_ARG_STRING, &wallpaper_mode, N_("Set mode of desktop wallpaper. MODE=(color|stretch|fit|crop|center|tile|screen)"), N_("MODE") },
     { "show-pref", '\0', 0, G_OPTION_ARG_INT, &show_pref, N_("Open Preferences dialog on the page N"), N_("N") },
     { "new-win", 'n', 0, G_OPTION_ARG_NONE, &new_win, N_("Open new window"), NULL },
-#if FM_CHECK_VERSION(1, 0, 2)
     { "find-files", 'f', 0, G_OPTION_ARG_NONE, &find_files, N_("Open a Find Files window"), NULL },
-#endif
     { "role", '\0', 0, G_OPTION_ARG_STRING, &window_role, N_("Window role for usage by window manager"), N_("ROLE") },
     { "wayland", '\0', 0, G_OPTION_ARG_NONE, &use_wayland, N_("Disable X code to run under Wayland"), NULL },
     {G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &files_to_open, NULL, N_("[FILE1, FILE2,...]")},
@@ -177,7 +173,6 @@ static void single_inst_cb(const char* cwd, int screen_num)
     pcmanfm_run(screen_num);
 }
 
-#if FM_CHECK_VERSION(1, 2, 0)
 /* ---- statusbar plugins support ---- */
 FM_MODULE_DEFINE_TYPE(tab_page_status, FmTabPageStatusInit, 1)
 
@@ -193,7 +188,6 @@ static gboolean fm_module_callback_tab_page_status(const char *name, gpointer in
     _tab_page_modules = g_list_append(_tab_page_modules, init);
     return TRUE;
 }
-#endif
 
 static void on_config_changed(FmAppConfig *cfg, gpointer _unused)
 {
@@ -205,9 +199,7 @@ int main(int argc, char** argv)
     FmConfig* config;
     GError* err = NULL;
     SingleInstData inst;
-#if FM_CHECK_VERSION(1, 2, 0)
     GList *l;
-#endif
 
 #ifdef ENABLE_NLS
     bindtextdomain ( GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR );
@@ -259,20 +251,9 @@ int main(int argc, char** argv)
 
     fm_gtk_init(config);
 
-#if FM_CHECK_VERSION(1, 2, 0)
     /* register our modules */
     fm_modules_add_directory(PACKAGE_MODULES_DIR);
     fm_module_register_tab_page_status();
-#endif
-
-#if FM_CHECK_VERSION(1, 0, 2)
-#  if !FM_CHECK_VERSION(1, 2, 0)
-    /* the sort_by value isn't loaded with LibFM 1.1.x so we need a workaround */
-    /* a little trick to initialize FmFolderModel class */
-    gpointer null_model = fm_folder_model_new(NULL, FALSE);
-    g_object_unref(null_model);
-#  endif
-#endif
 
     /* load pcmanfm-specific config file */
     fm_app_config_load_from_profile(FM_APP_CONFIG(config), profile);
@@ -298,14 +279,12 @@ int main(int argc, char** argv)
         fm_volume_manager_finalize();
     }
 
-#if FM_CHECK_VERSION(1, 2, 0)
     for (l = _tab_page_modules; l; l = l->next)
         if (((FmTabPageStatusInit*)l->data)->finalize)
             ((FmTabPageStatusInit*)l->data)->finalize();
     fm_module_unregister_type("tab_page_status");
     g_list_free(_tab_page_modules);
     _tab_page_modules = NULL;
-#endif
 
     single_inst_finalize(&inst);
     fm_gtk_finalize();
@@ -326,9 +305,7 @@ static gboolean reset_options(void)
     wallpaper_mode = NULL;
     show_pref = -1;
     new_win = FALSE;
-#if FM_CHECK_VERSION(1, 0, 2)
     find_files = FALSE;
-#endif
     g_free(window_role);
     window_role = NULL;
     g_strfreev(files_to_open);
@@ -487,11 +464,7 @@ gboolean pcmanfm_run(gint screen_num)
            * #3397444 - pcmanfm dont show window in daemon mode if i call 'pcmanfm' */
             pcmanfm_ref();
         }
-#if FM_CHECK_VERSION(1, 0, 2)
         else if (G_LIKELY(!find_files || n_pcmanfm_ref < 1))
-#else
-        else
-#endif
         {
             /* If we're not in daemon mode, or pcmanfm_run() is called because another
              * instance send signal to us, open cwd by default. */
@@ -507,12 +480,10 @@ gboolean pcmanfm_run(gint screen_num)
         }
     }
 
-#if FM_CHECK_VERSION(1, 0, 2)
     /* we got a reference at this point so we can open a search dialog */
     if (ret && find_files)
         fm_launch_search_simple(GTK_WINDOW(win), NULL, NULL,
                                 pcmanfm_open_folder, NULL);
-#endif
     reset_options();
     return ret;
 }
@@ -664,32 +635,14 @@ gboolean pcmanfm_can_open_path_in_terminal(FmPath* dir)
 
 void pcmanfm_open_folder_in_terminal(GtkWindow* parent, FmPath* dir)
 {
-#if !FM_CHECK_VERSION(1, 2, 0)
-    GAppInfo* app;
-    char** argv;
-    int argc;
-#endif
-
     if(!fm_config->terminal)
     {
         fm_show_error(parent, NULL, _("Terminal emulator is not set."));
         fm_edit_preference(parent, PREF_ADVANCED);
         return;
     }
-#if FM_CHECK_VERSION(1, 2, 0)
     else
     {
-#else
-    if(!g_shell_parse_argv(fm_config->terminal, &argc, &argv, NULL))
-        return;
-    app = g_app_info_create_from_commandline(argv[0], NULL, 0, NULL);
-    g_strfreev(argv);
-    if(app)
-    {
-        GdkAppLaunchContext* ctx = gdk_app_launch_context_new();
-        char* old_cwd = g_get_current_dir();
-        const char *old_pwd = g_getenv("PWD");
-#endif
         GError* err = NULL;
         char* cwd_str;
 
@@ -701,36 +654,12 @@ void pcmanfm_open_folder_in_terminal(GtkWindow* parent, FmPath* dir)
             cwd_str = g_file_get_path(gf);
             g_object_unref(gf);
         }
-#if FM_CHECK_VERSION(1, 2, 0)
         if (!fm_terminal_launch(cwd_str, &err))
-#else
-        /* this is a bit dirty to manipulate environment but what else to do? */
-        g_setenv("PWD", cwd_str, TRUE);
-        gdk_app_launch_context_set_screen(ctx, parent ? gtk_widget_get_screen(GTK_WIDGET(parent)) : gdk_screen_get_default());
-        gdk_app_launch_context_set_timestamp(ctx, gtk_get_current_event_time());
-        g_chdir(cwd_str); /* FIXME: currently we don't have better way for this. maybe a wrapper script? */
-        g_free(cwd_str);
-
-        if(!g_app_info_launch(app, NULL, G_APP_LAUNCH_CONTEXT(ctx), &err))
-#endif
         {
             fm_show_error(parent, NULL, err->message);
             g_error_free(err);
         }
-#if FM_CHECK_VERSION(1, 2, 0)
         g_free(cwd_str);
-#else
-        g_object_unref(ctx);
-        g_object_unref(app);
-
-        /* switch back to old cwd and fix #3114626 - PCManFM 0.9.9 Umount partitions problem */
-        g_chdir(old_cwd); /* This is really dirty, but we don't have better solution now. */
-        g_free(old_cwd);
-        if (old_pwd)
-            g_setenv("PWD", old_pwd, TRUE);
-        else
-            g_unsetenv("PWD");
-#endif
     }
 }
 
