@@ -261,7 +261,11 @@ int gdk_mon_num (int x_mon_num)
     int i = 0;
 #if GTK_CHECK_VERSION(3, 0, 0)
     int nmons = gdk_display_get_n_monitors (disp);
-    while (i++ < nmons) if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+    while (i < nmons)
+    {
+        if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+        i++;
+    }
     int prim = i;
 #else
     GdkScreen *scr = gdk_display_get_screen (disp, 0);
@@ -322,7 +326,11 @@ int x_mon_num (int gdk_mon_num)
     int i = 0;
 #if GTK_CHECK_VERSION(3, 0, 0)
     int nmons = gdk_display_get_n_monitors (disp);
-    while (i++ < nmons) if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+    while (i < nmons)
+    {
+        if (gdk_monitor_is_primary (gdk_display_get_monitor (disp, i))) break;
+        i++;
+    }
     int prim = i;
 #else
     GdkScreen *scr = gdk_display_get_screen (disp, 0);
@@ -6478,7 +6486,7 @@ void fm_desktop_manager_init(gint on_screen)
 
     gdpy = gdk_display_get_default();
 #if GTK_CHECK_VERSION(3, 0, 0)
-    n_mon = gdk_display_get_n_monitors (gdpy);
+    n_screens = n_mon = gdk_display_get_n_monitors (gdpy);
     scr = 0;
     desktops = g_new (FmDesktop*, n_mon);
     GdkScreen* screen = gdk_display_get_default_screen (gdpy);
