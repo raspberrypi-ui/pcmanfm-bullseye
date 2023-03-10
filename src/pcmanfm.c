@@ -220,7 +220,7 @@ int main(int argc, char** argv)
     inst.prog_name = "pcmanfm";
     inst.cb = single_inst_cb;
     inst.opt_entries = opt_entries + 3;
-    if (!strcmp (getenv ("XDG_SESSION_TYPE"), "x11"))
+    if (!use_wayland)
         inst.screen_num = gdk_x11_get_default_screen();
     switch(single_inst_init(&inst))
     {
