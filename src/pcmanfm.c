@@ -93,7 +93,6 @@ static GOptionEntry opt_entries[] =
     { "new-win", 'n', 0, G_OPTION_ARG_NONE, &new_win, N_("Open new window"), NULL },
     { "find-files", 'f', 0, G_OPTION_ARG_NONE, &find_files, N_("Open a Find Files window"), NULL },
     { "role", '\0', 0, G_OPTION_ARG_STRING, &window_role, N_("Window role for usage by window manager"), N_("ROLE") },
-    { "wayland", '\0', 0, G_OPTION_ARG_NONE, &use_wayland, N_("Disable X code to run under Wayland"), NULL },
     {G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &files_to_open, NULL, N_("[FILE1, FILE2,...]")},
     { NULL }
 };
@@ -206,6 +205,8 @@ int main(int argc, char** argv)
     bind_textdomain_codeset ( GETTEXT_PACKAGE, "UTF-8" );
     textdomain ( GETTEXT_PACKAGE );
 #endif
+
+    if (!strcmp (getenv ("XDG_SESSION_TYPE"), "wayland")) use_wayland = TRUE;
 
     /* initialize GTK+ and parse the command line arguments */
     if(G_UNLIKELY(!gtk_init_with_args(&argc, &argv, " ", opt_entries, GETTEXT_PACKAGE, &err)))
