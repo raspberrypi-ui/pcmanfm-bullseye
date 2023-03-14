@@ -82,7 +82,6 @@ struct _FmDesktop
     guint single_click_timeout_handler;
     guint button_pressed;
     FmFolderModel* model;
-    guint cur_desktop;
     gint monitor;
     FmBackgroundCache *cache;
     GtkCssProvider *css;

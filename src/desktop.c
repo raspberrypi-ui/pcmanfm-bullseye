@@ -174,15 +174,9 @@ gboolean is_wizard (void)
     return FALSE;
 }
 
-int gdk_mon_num_for_desktop (FmDesktop *desk)
+GdkMonitor *gdk_mon_for_desktop (FmDesktop *desk)
 {
-    int i = 0;
-    while (i < n_screens)
-    {
-        if (desk == desktops[i]) return i;
-        i++;
-    }
-    return -1;
+    return gdk_display_get_monitor (gdk_display_get_default (), desk->monitor);
 }
 
 /* ---------------------------------------------------------------------
@@ -2186,7 +2180,7 @@ static void update_background(FmDesktop* desktop, int is_it)
 
     if (!desktop->conf.wallpaper_common)
     {
-        guint32 cur_desktop = gdk_mon_num_for_desktop (desktop);
+        guint32 cur_desktop = desktop->monitor;
 
         if(is_it >= 0) /* signal "changed::wallpaper" */
         {
@@ -2324,7 +2318,7 @@ static void update_background(FmDesktop* desktop, int is_it)
         src_h = gdk_pixbuf_get_height(pix);
         {
             GdkRectangle geom;
-            gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+            gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
             dest_w = geom.width;
             dest_h = geom.height;
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
@@ -2527,8 +2521,8 @@ static void on_rows_reordered(FmFolderModel* model, GtkTreePath* parent_tp, GtkT
 static void update_working_area (FmDesktop* desktop)
 {
     GdkRectangle geom;
-    gdk_monitor_get_workarea (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &desktop->working_area);
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+    gdk_monitor_get_workarea (gdk_mon_for_desktop (desktop), &desktop->working_area);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
     desktop->working_area.x -= geom.x;
     desktop->working_area.y -= geom.y;
     queue_layout_items(desktop);
@@ -2554,7 +2548,7 @@ static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointe
 static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
 {
     GdkRectangle geom;
-    if (gdk_mon_num_for_desktop (desktop) >= gdk_display_get_n_monitors (gdk_display_get_default ()))
+    if (desktop->monitor >= gdk_display_get_n_monitors (gdk_display_get_default ()))
     {
         gint i;
         /* our monitor was disconnected... remove FmDesktop now! */
@@ -2562,11 +2556,11 @@ static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
             if (desktops[i] == desktop)
                 break;
         if (i < n_screens)
-            desktops[i] = fm_desktop_new(screen, gdk_mon_num_for_desktop (desktop) ? -2 : -1);
+            desktops[i] = fm_desktop_new(screen, desktop->monitor ? -2 : -1);
         gtk_widget_destroy(GTK_WIDGET(desktop));
         return;
     }
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
     gtk_window_resize((GtkWindow*)desktop, geom.width, geom.height);
     /* bug #3614780: if monitor was moved desktop should be moved too */
     gtk_window_move((GtkWindow*)desktop, geom.x, geom.y);
@@ -3151,7 +3145,7 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 
     GtkAllocation geom;
 
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (self)), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (self), &geom);
     gtk_widget_set_size_request (w, geom.width, geom.height);
 
     pc = gtk_widget_get_pango_context((GtkWidget*)self);
@@ -3204,14 +3198,14 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 static void on_get_preferred_width(GtkWidget *w, gint *minimal_width, gint *natural_width)
 {
     GdkRectangle geom;
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (FM_DESKTOP (w))), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
     *minimal_width = *natural_width = geom.width;
 }
 
 static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *natural_height)
 {
     GdkRectangle geom;
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (FM_DESKTOP (w))), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
     *minimal_height = *natural_height = geom.height;
 }
 
@@ -3809,7 +3803,7 @@ static void desktop_search_position(FmDesktop *desktop)
     gtk_widget_realize(desktop->search_window);
 
     gtk_widget_get_preferred_size(desktop->search_window, NULL, &requisition);
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), gdk_mon_num_for_desktop (desktop)), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
 
     x = geom.x + desktop->working_area.x + desktop->working_area.width - requisition.width;
     y = geom.y + desktop->working_area.y;
@@ -4501,7 +4495,7 @@ static void on_folder_finish_loading(FmFolder* folder, gpointer user_data)
     FmDesktop* desktop = user_data;
 
     /* the desktop folder is just loaded, apply desktop items and positions */
-    if(gdk_mon_num_for_desktop (desktop) < 0)
+    if(desktop->monitor < 0)
         return;
     fm_folder_view_add_popup(FM_FOLDER_VIEW(desktop), GTK_WINDOW(desktop),
                              fm_desktop_update_popup);
@@ -4719,7 +4713,7 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     if(self->monitor < 0)
         return object; /* this monitor is disabled */
     g_debug("fm_desktop_constructor for monitor %d", self->monitor);
-    gdk_monitor_get_geometry (gdk_display_get_monitor (gdk_display_get_default (), self->monitor), &geom);
+    gdk_monitor_get_geometry (gdk_mon_for_desktop (self), &geom);
     gtk_window_set_default_size((GtkWindow*)self, geom.width, geom.height);
     gtk_window_move(GTK_WINDOW(self), geom.x, geom.y);
     gtk_widget_set_app_paintable((GtkWidget*)self, TRUE);
@@ -4753,8 +4747,6 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     gdk_window_set_events(root, gdk_window_get_events(root)|GDK_PROPERTY_CHANGE_MASK);
     gdk_window_add_filter(root, on_root_event, self);
     g_signal_connect(screen, "monitors-changed", G_CALLBACK(on_screen_size_changed), self);
-
-    self->cur_desktop = self->monitor;
 
     /* init dnd support */
     self->dnd_src = fm_dnd_src_new((GtkWidget*)self);
@@ -5215,7 +5207,7 @@ static void on_desktop_font_set(GtkFontButton* btn, FmDesktop *desktop)
         g_free(desktop->conf.desktop_font);
         desktop->conf.desktop_font = g_strdup(font);
         queue_config_save(desktop);
-        if(gdk_mon_num_for_desktop (desktop) < 0)
+        if(desktop->monitor < 0)
             return;
         font_desc = pango_font_description_from_string(desktop->conf.desktop_font);
         if(font_desc)

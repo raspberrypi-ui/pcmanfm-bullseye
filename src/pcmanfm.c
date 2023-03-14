@@ -525,7 +525,7 @@ static void move_window_to_desktop(FmMainWin* win, FmDesktop* desktop)
     xev.window = GDK_WINDOW_XID(gtk_widget_get_window(GTK_WIDGET(win)));
     xev.message_type = atom;
     xev.format = 32;
-    xev.data.l[0] = desktop->cur_desktop;
+    xev.data.l[0] = desktop->monitor;
     xev.data.l[1] = 0;
     xev.data.l[2] = 0;
     xev.data.l[3] = 0;
