@@ -110,8 +110,7 @@ static gint pending_rename = 0;
 static guint ren_timer = 0;
 static guint ren_x, ren_y;
 
-//#define MAX_MONS 4
-//static GdkRectangle mon_sizes[MAX_MONS + 1];
+static guint hotplug_timer = 0;
 
 enum {
 #if N_FM_DND_DEST_DEFAULT_TARGETS > N_FM_DND_SRC_DEFAULT_TARGETS
@@ -5771,11 +5770,12 @@ void fm_desktop_wallpaper_changed(FmDesktop *desktop)
     update_background(desktop, 0);
 }
 
-void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data)
+static gboolean update_monitors (gpointer user_data)
 {
     GdkDisplay *gdpy = gdk_display_get_default ();
     int mon, dsk;
 
+    hotplug_timer = 0;
     // tear down existing desktops
     for (mon = 0; mon < n_screens; mon++)
     {
@@ -5864,4 +5864,12 @@ void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data
         }
         g_list_free (ml);
     }
+    return FALSE;
+}
+
+
+void monitors_changed (GdkDisplay *self, GdkMonitor *monitor, gpointer user_data)
+{
+    if (hotplug_timer) g_source_remove (hotplug_timer);
+    hotplug_timer = g_timeout_add (500, update_monitors, NULL);
 }
