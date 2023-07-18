@@ -2177,6 +2177,14 @@ static void update_background(FmDesktop* desktop, int is_it)
 
     char *wallpaper;
 
+    if (use_wayland)
+    {
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_LEFT, desktop->conf.margin);
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_RIGHT, desktop->conf.margin);
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.margin);
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_BOTTOM, desktop->conf.margin);
+    }
+
     if (!desktop->conf.wallpaper_common)
     {
         guint32 cur_desktop = desktop->monitor;
@@ -2316,15 +2324,7 @@ static void update_background(FmDesktop* desktop, int is_it)
         src_w = gdk_pixbuf_get_width(pix);
         src_h = gdk_pixbuf_get_height(pix);
         {
-            GdkRectangle geom;
-            gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
-            dest_w = geom.width;
-            dest_h = geom.height;
-            if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
-            {
-                x = -geom.x;
-                y = -geom.y;
-            }
+            gtk_window_get_size (widget, &dest_w, &dest_h);
             if (!dest_w || !dest_h) return;   // no monitor info yet; give up....
         }
         if (use_wayland)
@@ -3145,6 +3145,11 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
     GtkAllocation geom;
 
     gdk_monitor_get_geometry (gdk_mon_for_desktop (self), &geom);
+    if (use_wayland)
+    {
+        geom.height -= (FM_DESKTOP (w))->conf.margin * 2;
+        geom.width -= (FM_DESKTOP (w))->conf.margin * 2;
+    }
     gtk_widget_set_size_request (w, geom.width, geom.height);
 
     pc = gtk_widget_get_pango_context((GtkWidget*)self);
@@ -3198,14 +3203,14 @@ static void on_get_preferred_width(GtkWidget *w, gint *minimal_width, gint *natu
 {
     GdkRectangle geom;
     gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
-    *minimal_width = *natural_width = geom.width;
+    *minimal_width = *natural_width = geom.width - use_wayland ? (FM_DESKTOP (w))->conf.margin * 2 : 0;
 }
 
 static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *natural_height)
 {
     GdkRectangle geom;
     gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
-    *minimal_height = *natural_height = geom.height;
+    *minimal_height = *natural_height = geom.height - use_wayland ? (FM_DESKTOP (w))->conf.margin * 2 : 0;
 }
 
 static void _stop_rubberbanding(FmDesktop *self, gint x, gint y)
@@ -3877,6 +3882,8 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
         gtk_layer_init_for_window (window);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
+        gtk_layer_set_margin (window, GTK_LAYER_SHELL_EDGE_RIGHT, desktop->conf.margin);
+        gtk_layer_set_margin (window, GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.margin);
         gtk_layer_set_layer (window, GTK_LAYER_SHELL_LAYER_OVERLAY);
         gtk_layer_set_keyboard_mode (window, GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
     }
