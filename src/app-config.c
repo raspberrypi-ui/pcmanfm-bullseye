@@ -240,6 +240,8 @@ static void fm_app_config_init(FmAppConfig *cfg)
     cfg->desktop_section.show_mounts = FALSE;
     cfg->desktop_section.folder = NULL;
     cfg->desktop_section.margin = 0;
+    cfg->desktop_section.tmargin = 0;
+    cfg->desktop_section.bmargin = 0;
     cfg->tb.visible = cfg->tb.new_tab = cfg->tb.nav = cfg->tb.home = TRUE;
     cfg->tb.new_win = FALSE;
     cfg->autorun_choices = g_hash_table_new_full(g_str_hash, g_str_equal,
@@ -362,6 +364,8 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     fm_key_file_get_bool(kf, group, "show_trash", &cfg->show_trash);
     fm_key_file_get_bool(kf, group, "show_mounts", &cfg->show_mounts);
     fm_key_file_get_int(kf, group, "margin", &cfg->margin);
+    fm_key_file_get_int(kf, group, "tmargin", &cfg->tmargin);
+    fm_key_file_get_int(kf, group, "bmargin", &cfg->bmargin);
 }
 
 void fm_app_config_load_from_key_file(FmAppConfig* cfg, GKeyFile* kf)

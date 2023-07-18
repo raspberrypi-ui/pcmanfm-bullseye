@@ -2181,8 +2181,8 @@ static void update_background(FmDesktop* desktop, int is_it)
     {
         gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_LEFT, desktop->conf.margin);
         gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_RIGHT, desktop->conf.margin);
-        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.margin);
-        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_BOTTOM, desktop->conf.margin);
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.tmargin);
+        gtk_layer_set_margin (GTK_WIDGET (desktop), GTK_LAYER_SHELL_EDGE_BOTTOM, desktop->conf.bmargin);
     }
 
     if (!desktop->conf.wallpaper_common)
@@ -3147,7 +3147,7 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
     gdk_monitor_get_geometry (gdk_mon_for_desktop (self), &geom);
     if (use_wayland)
     {
-        geom.height -= (FM_DESKTOP (w))->conf.margin * 2;
+        geom.height -= (FM_DESKTOP (w))->conf.tmargin + (FM_DESKTOP (w))->conf.bmargin;
         geom.width -= (FM_DESKTOP (w))->conf.margin * 2;
     }
     gtk_widget_set_size_request (w, geom.width, geom.height);
@@ -3210,7 +3210,7 @@ static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *na
 {
     GdkRectangle geom;
     gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
-    *minimal_height = *natural_height = geom.height - use_wayland ? (FM_DESKTOP (w))->conf.margin * 2 : 0;
+    *minimal_height = *natural_height = geom.height - use_wayland ? (FM_DESKTOP (w))->conf.tmargin + (FM_DESKTOP (w))->conf.bmargin : 0;
 }
 
 static void _stop_rubberbanding(FmDesktop *self, gint x, gint y)
@@ -3883,7 +3883,7 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
         gtk_layer_set_margin (window, GTK_LAYER_SHELL_EDGE_RIGHT, desktop->conf.margin);
-        gtk_layer_set_margin (window, GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.margin);
+        gtk_layer_set_margin (window, GTK_LAYER_SHELL_EDGE_TOP, desktop->conf.tmargin);
         gtk_layer_set_layer (window, GTK_LAYER_SHELL_LAYER_OVERLAY);
         gtk_layer_set_keyboard_mode (window, GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
     }

@@ -87,6 +87,8 @@ typedef struct
     gboolean show_trash;
     gboolean show_mounts;
     gint margin;
+    gint tmargin;
+    gint bmargin;
 } FmDesktopConfig;
 
 typedef struct
