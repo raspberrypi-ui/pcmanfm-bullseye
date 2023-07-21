@@ -169,6 +169,7 @@ void fm_app_config_load_from_key_file(FmAppConfig* cfg, GKeyFile* kf);
 void fm_app_config_save_profile(FmAppConfig* cfg, const char* name);
 
 void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDesktopConfig *cfg);
+void fm_app_config_load_desktop_margins(GKeyFile *kf, const char *group, FmDesktopConfig *cfg);
 void fm_app_config_save_desktop_config(GString *buf, const char *group, FmDesktopConfig *cfg);
 
 gboolean fm_app_config_get_config_for_path(FmPath *path, FmSortMode *mode,

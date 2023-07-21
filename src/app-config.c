@@ -371,6 +371,17 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     fm_key_file_get_int(kf, group, "bmargin", &cfg->bmargin);
 }
 
+void fm_app_config_load_desktop_margins(GKeyFile *kf, const char *group, FmDesktopConfig *cfg)
+{
+    if (!g_key_file_has_group (kf, group)) return;
+    cfg->margin = 0;
+    cfg->tmargin = 0;
+    cfg->bmargin = 0;
+    fm_key_file_get_int (kf, group, "margin", &cfg->margin);
+    fm_key_file_get_int (kf, group, "tmargin", &cfg->tmargin);
+    fm_key_file_get_int (kf, group, "bmargin", &cfg->bmargin);
+}
+
 void fm_app_config_load_from_key_file(FmAppConfig* cfg, GKeyFile* kf)
 {
     char *tmp;
@@ -392,6 +403,7 @@ void fm_app_config_load_from_key_file(FmAppConfig* cfg, GKeyFile* kf)
 
     /* [desktop] section */
     fm_app_config_load_desktop_config(kf, "desktop", &cfg->desktop_section);
+    fm_app_config_load_desktop_margins(kf, "desktop", &cfg->desktop_section);
 
     /* ui */
     fm_key_file_get_bool(kf, "ui", "always_show_tabs", &cfg->always_show_tabs);

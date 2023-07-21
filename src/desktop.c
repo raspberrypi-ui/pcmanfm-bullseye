@@ -181,7 +181,7 @@ GdkMonitor *gdk_mon_for_desktop (FmDesktop *desk)
 /* ---------------------------------------------------------------------
     Items management and common functions */
 
-static char* get_config_file(FmDesktop* desktop, gboolean create_dir)
+static char* get_config_file(FmDesktop* desktop, gboolean create_dir, gboolean margins)
 {
     char *dir, *path;
     int i;
@@ -191,7 +191,7 @@ static char* get_config_file(FmDesktop* desktop, gboolean create_dir)
             break;
     if(i >= n_screens)
         return NULL;
-    if (app_config->common_bg) i = 0;
+    if (!margins && app_config->common_bg) i = 0;
     dir = pcmanfm_get_profile_dir(create_dir);
     path = g_strdup_printf(is_wizard () ? "%s/wizard-items-%u.conf" : "%s/desktop-items-%u.conf", dir, i);
     g_free(dir);
@@ -336,7 +336,7 @@ static inline void load_config(FmDesktop* desktop)
     g_free(path);
     g_key_file_free(kf);
 
-    path = get_config_file(desktop, FALSE);
+    path = get_config_file(desktop, FALSE, FALSE);
     if(!path)
         return;
     kf = g_key_file_new();
@@ -345,6 +345,15 @@ static inline void load_config(FmDesktop* desktop)
         fm_app_config_load_desktop_config(kf, "*", &desktop->conf);
     g_free(path);
     g_key_file_free(kf);
+
+    path = get_config_file (desktop, FALSE, TRUE);
+    if (!path) return;
+    kf = g_key_file_new ();
+    if (g_key_file_load_from_file (kf, path, 0, NULL))
+        fm_app_config_load_desktop_margins (kf, "*", &desktop->conf);
+    g_free (path);
+    g_key_file_free (kf);
+
 }
 
 static inline void load_items(FmDesktop* desktop)
@@ -359,7 +368,7 @@ static inline void load_items(FmDesktop* desktop)
     model = GTK_TREE_MODEL(desktop->model);
     if (!gtk_tree_model_get_iter_first(model, &it))
         return;
-    path = get_config_file(desktop, FALSE);
+    path = get_config_file(desktop, FALSE, FALSE);
     if(!path)
         return;
     kf = g_key_file_new();
@@ -439,7 +448,7 @@ static void save_item_pos(FmDesktop* desktop)
 {
     GList* l;
     GString* buf;
-    char* path = get_config_file(desktop, TRUE);
+    char* path = get_config_file(desktop, TRUE, FALSE);
 
     if(!path)
         return;
