@@ -276,6 +276,9 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     cfg->wallpaper_common = TRUE;
     cfg->show_trash = TRUE;
     cfg->configured = TRUE;
+    cfg->margin = 0;
+    cfg->tmargin = 0;
+    cfg->bmargin = 0;
     tmp = g_key_file_get_string(kf, group, "wallpaper_mode", NULL);
     if (tmp)
     {
