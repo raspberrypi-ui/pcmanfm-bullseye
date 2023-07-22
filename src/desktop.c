@@ -181,7 +181,7 @@ GdkMonitor *gdk_mon_for_desktop (FmDesktop *desk)
 /* ---------------------------------------------------------------------
     Items management and common functions */
 
-static char* get_config_file(FmDesktop* desktop, gboolean create_dir, gboolean margins)
+static char* get_config_file(FmDesktop* desktop, gboolean create_dir)
 {
     char *dir, *path;
     int i;
@@ -191,7 +191,7 @@ static char* get_config_file(FmDesktop* desktop, gboolean create_dir, gboolean m
             break;
     if(i >= n_screens)
         return NULL;
-    if (!margins && app_config->common_bg) i = 0;
+    if (app_config->common_bg) i = 0;
     dir = pcmanfm_get_profile_dir(create_dir);
     path = g_strdup_printf(is_wizard () ? "%s/wizard-items-%u.conf" : "%s/desktop-items-%u.conf", dir, i);
     g_free(dir);
@@ -213,6 +213,25 @@ static char* get_sys_config_file (FmDesktop* desktop)
     path = g_strdup_printf (is_wizard () ? "%s/wizard-items-%u.conf" : "%s/desktop-items-%u.conf", dir, i);
     g_free (dir);
     return path;
+}
+
+void load_margins (FmDesktop* desktop)
+{
+    GKeyFile* kf;
+    char *dir, *path;
+    int i;
+
+    for (i = 0; i < n_screens; i++)
+        if (desktops[i] == desktop) break;
+    if (i >= n_screens) return;
+    dir = pcmanfm_get_profile_dir (FALSE);
+    path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
+    kf = g_key_file_new ();
+    if (g_key_file_load_from_file (kf, path, 0, NULL))
+        fm_app_config_load_desktop_margins (kf, "*", &desktop->conf);
+    g_key_file_free (kf);
+    g_free (path);
+    g_free (dir);
 }
 
 static inline FmDesktopItem* desktop_item_new(FmFolderModel* model, GtkTreeIter* it)
@@ -336,7 +355,7 @@ static inline void load_config(FmDesktop* desktop)
     g_free(path);
     g_key_file_free(kf);
 
-    path = get_config_file(desktop, FALSE, FALSE);
+    path = get_config_file(desktop, FALSE);
     if(!path)
         return;
     kf = g_key_file_new();
@@ -346,14 +365,7 @@ static inline void load_config(FmDesktop* desktop)
     g_free(path);
     g_key_file_free(kf);
 
-    path = get_config_file (desktop, FALSE, TRUE);
-    if (!path) return;
-    kf = g_key_file_new ();
-    if (g_key_file_load_from_file (kf, path, 0, NULL))
-        fm_app_config_load_desktop_margins (kf, "*", &desktop->conf);
-    g_free (path);
-    g_key_file_free (kf);
-
+    load_margins (desktop);
 }
 
 static inline void load_items(FmDesktop* desktop)
@@ -368,7 +380,7 @@ static inline void load_items(FmDesktop* desktop)
     model = GTK_TREE_MODEL(desktop->model);
     if (!gtk_tree_model_get_iter_first(model, &it))
         return;
-    path = get_config_file(desktop, FALSE, FALSE);
+    path = get_config_file(desktop, FALSE);
     if(!path)
         return;
     kf = g_key_file_new();
@@ -448,7 +460,7 @@ static void save_item_pos(FmDesktop* desktop)
 {
     GList* l;
     GString* buf;
-    char* path = get_config_file(desktop, TRUE, FALSE);
+    char* path = get_config_file(desktop, TRUE);
 
     if(!path)
         return;
