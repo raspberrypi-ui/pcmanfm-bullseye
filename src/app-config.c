@@ -276,9 +276,6 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     cfg->wallpaper_common = TRUE;
     cfg->show_trash = TRUE;
     cfg->configured = TRUE;
-    cfg->margin = 0;
-    cfg->tmargin = 0;
-    cfg->bmargin = 0;
     tmp = g_key_file_get_string(kf, group, "wallpaper_mode", NULL);
     if (tmp)
     {
@@ -366,9 +363,6 @@ void fm_app_config_load_desktop_config(GKeyFile *kf, const char *group, FmDeskto
     fm_key_file_get_bool(kf, group, "show_documents", &cfg->show_documents);
     fm_key_file_get_bool(kf, group, "show_trash", &cfg->show_trash);
     fm_key_file_get_bool(kf, group, "show_mounts", &cfg->show_mounts);
-    fm_key_file_get_int(kf, group, "margin", &cfg->margin);
-    fm_key_file_get_int(kf, group, "tmargin", &cfg->tmargin);
-    fm_key_file_get_int(kf, group, "bmargin", &cfg->bmargin);
 }
 
 void fm_app_config_load_desktop_margins(GKeyFile *kf, const char *group, FmDesktopConfig *cfg)
