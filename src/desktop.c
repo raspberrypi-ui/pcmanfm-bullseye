@@ -3361,12 +3361,14 @@ static gboolean on_button_press(GtkWidget* w, GdkEventButton* evt)
         /* SF bug #929: after click the tooltip is still set to the item name */
         self->hover_item = NULL;
     }
+#if 0
     /* forward the event to root window */
     else if(evt->button != 1 && evt->button == self->button_pressed)
     {
         self->forward_pending = TRUE;
         forward_event_to_rootwin(gtk_widget_get_screen(w), (GdkEvent*)evt);
     }
+#endif
 
     if(! gtk_widget_has_focus(w))
     {
