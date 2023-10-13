@@ -187,6 +187,8 @@ static const char main_menu_cutdown_xml[] =
   "<menu action='ViewMenu'>"
     "<menuitem action='Reload'/>"
     "<separator/>"
+    "<menuitem action='Fullscreen' />"
+    "<separator/>"
     "<menuitem action='TogIconView'/>"
     "<menuitem action='TogListView'/>"
     "<separator/>"
