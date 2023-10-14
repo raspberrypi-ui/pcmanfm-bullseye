@@ -2420,9 +2420,9 @@ static void update_background(FmDesktop* desktop, int is_it)
     XFlush(xdisplay);
     XUngrabServer(xdisplay);
 
+    }
     if(pix)
         g_object_unref(pix);
-    }
 
     gdk_window_invalidate_rect(window, NULL, TRUE);
 }
