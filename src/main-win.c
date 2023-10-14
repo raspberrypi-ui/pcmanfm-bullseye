@@ -42,6 +42,8 @@
 
 #define VIEW_TAB_LOC 4
 
+extern gboolean use_wayland;
+
 static void fm_main_win_destroy(GtkWidget *object);
 
 static void fm_main_win_finalize(GObject *object);
