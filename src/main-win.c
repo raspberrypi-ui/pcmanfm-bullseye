@@ -1773,16 +1773,19 @@ FmMainWin* fm_main_win_add_win(FmMainWin* win, FmPath* path)
     gtk_window_present(GTK_WINDOW(win));
 
 #define TITLE_HEIGHT 50
-    GdkDisplay *disp = gtk_widget_get_display (GTK_WIDGET (win));
-    GdkMonitor *mon = gdk_display_get_monitor_at_window (disp, gtk_widget_get_window (GTK_WIDGET (win)));
-    GdkRectangle geom;
-    gdk_monitor_get_geometry (mon, &geom);
-
-    if (geom.width < app_config->win_width || geom.height < app_config->win_height)
+    if (use_wayland)
     {
-        gtk_window_resize (GTK_WINDOW (win), geom.width, geom.height - TITLE_HEIGHT);
-        gtk_window_set_gravity (GTK_WINDOW (win), GDK_GRAVITY_NORTH_WEST);
-        gtk_window_move (GTK_WINDOW (win), geom.x, geom.y);
+        GdkDisplay *disp = gtk_widget_get_display (GTK_WIDGET (win));
+        GdkMonitor *mon = gdk_display_get_monitor_at_window (disp, gtk_widget_get_window (GTK_WIDGET (win)));
+        GdkRectangle geom;
+        gdk_monitor_get_geometry (mon, &geom);
+
+        if (geom.width < app_config->win_width || geom.height < app_config->win_height)
+        {
+            gtk_window_resize (GTK_WINDOW (win), geom.width, geom.height - TITLE_HEIGHT);
+            gtk_window_set_gravity (GTK_WINDOW (win), GDK_GRAVITY_NORTH_WEST);
+            gtk_window_move (GTK_WINDOW (win), geom.x, geom.y);
+        }
     }
 
     /* set toolbar visibility and menu toggleables from config */
