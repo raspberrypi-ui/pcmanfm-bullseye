@@ -1776,31 +1776,22 @@ FmMainWin* fm_main_win_add_win(FmMainWin* win, FmPath* path)
 
     if (use_wayland)
     {
+        /*
+         * This is a kludgy hack required because wayland does not restrict the size of a window to screen bounds
+         * if a default size is explicitly requested.
+         * A window will be centred in the space outside the exclusive zone of the panel, and the titlebar is added
+         * to any requested size, so to get the right size, the height requested needs to be reduced by the size
+         * of both - by default, the panel is 36 pixels and a titlebar is 30 pixels, hence 66.
+         * I cannot think of any non-hacky way to get the exact values in effect, so just assume it won't be worse
+         * than the defaults, which would be unusual on a low-res screen.
+         */
         GdkDisplay *disp = gtk_widget_get_display (GTK_WIDGET (win));
         GdkMonitor *mon = gdk_display_get_monitor_at_window (disp, gtk_widget_get_window (GTK_WIDGET (win)));
         GdkRectangle geom;
         gdk_monitor_get_geometry (mon, &geom);
 
         if (geom.width < app_config->win_width || geom.height < app_config->win_height)
-        {
-            /* This is a mess...
-             * Two heights affect the layout of the window:
-             * - the exclusive zone of the taskbar
-             * - the height of a window titlebar
-             * In order to get the correct size of window, you need to resize to (screen size - (taskbar height + titlebar height))
-             * When you move the window, it automatically is pushed out of the exclusive zone if at the top, and is automatically
-             * pushed by the height of the titlebar, so ends up in the right place.
-             *
-             * So the right thing to do is to set position to geom.y, having previously subtracted these two values from the height of the window.
-             *
-             * Good luck finding either of those two values from here by any simple method. Cos I can't think of a way to get either...
-             */
-
-#define TITLE_HEIGHT 80
-            gtk_window_resize (GTK_WINDOW (win), geom.width, geom.height - TITLE_HEIGHT);
-            gtk_window_set_gravity (GTK_WINDOW (win), GDK_GRAVITY_NORTH_WEST);
-            gtk_window_move (GTK_WINDOW (win), geom.x, geom.y);
-        }
+            gtk_window_resize (GTK_WINDOW (win), geom.width, geom.height - 66);
     }
 
     /* set toolbar visibility and menu toggleables from config */
