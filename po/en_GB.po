@@ -30,7 +30,7 @@ msgstr "Steve <yorvik.ubunto@googlemail.com>"
 #: ../data/ui/desktop-pref.glade.h:1 ../src/desktop-ui.c:34
 #: ../data/pcmanfm-desktop-pref.desktop.in.h:1
 msgid "Desktop Preferences"
-msgstr "Desktop Preferences"
+msgstr "Desktop Preferences..."
 
 #: ../data/ui/desktop-pref.glade.h:2
 msgid "<b>Background</b>"
