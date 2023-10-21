@@ -206,7 +206,7 @@ int main(int argc, char** argv)
     textdomain ( GETTEXT_PACKAGE );
 #endif
 
-    if (!strcmp (getenv ("XDG_SESSION_TYPE"), "wayland")) use_wayland = TRUE;
+    if (getenv ("WAYLAND_DISPLAY")) use_wayland = TRUE;
 
     /* initialize GTK+ and parse the command line arguments */
     if(G_UNLIKELY(!gtk_init_with_args(&argc, &argv, " ", opt_entries, GETTEXT_PACKAGE, &err)))
