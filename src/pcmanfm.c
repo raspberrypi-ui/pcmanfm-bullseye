@@ -69,7 +69,6 @@ static gboolean new_win = FALSE;
 static gboolean find_files = FALSE;
 static char* ipc_cwd = NULL;
 static char* window_role = NULL;
-gboolean use_wayland = FALSE;
 
 static int n_pcmanfm_ref = 0;
 
@@ -206,8 +205,6 @@ int main(int argc, char** argv)
     textdomain ( GETTEXT_PACKAGE );
 #endif
 
-    if (!strcmp (getenv ("XDG_SESSION_TYPE"), "wayland")) use_wayland = TRUE;
-
     /* initialize GTK+ and parse the command line arguments */
     if(G_UNLIKELY(!gtk_init_with_args(&argc, &argv, " ", opt_entries, GETTEXT_PACKAGE, &err)))
     {
@@ -220,7 +217,7 @@ int main(int argc, char** argv)
     inst.prog_name = "pcmanfm";
     inst.cb = single_inst_cb;
     inst.opt_entries = opt_entries + 3;
-    if (!use_wayland)
+    if (!gtk_layer_is_supported ())
         inst.screen_num = gdk_x11_get_default_screen();
     switch(single_inst_init(&inst))
     {
@@ -509,7 +506,7 @@ void pcmanfm_unref()
 
 static void move_window_to_desktop(FmMainWin* win, FmDesktop* desktop)
 {
-    if (use_wayland) return;
+#if 0
     GdkScreen* screen = gtk_widget_get_screen(GTK_WIDGET(desktop));
     Atom atom;
     char* atom_name = "_NET_WM_DESKTOP";
@@ -534,6 +531,7 @@ static void move_window_to_desktop(FmMainWin* win, FmDesktop* desktop)
     XSendEvent(gdk_x11_get_default_xdisplay(), GDK_ROOT_WINDOW(), False,
                (SubstructureNotifyMask | SubstructureRedirectMask),
                (XEvent *) &xev);
+#endif
 }
 
 gboolean pcmanfm_open_folder(GAppLaunchContext* ctx, GList* folder_infos, gpointer user_data, GError** err)

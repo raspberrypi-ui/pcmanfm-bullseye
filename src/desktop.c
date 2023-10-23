@@ -39,8 +39,6 @@
 
 #include <cairo-xlib.h>
 
-#include <gtk-layer-shell/gtk-layer-shell.h>
-
 #include "pref.h"
 #include "main-win.h"
 
@@ -73,8 +71,6 @@ struct _FmBackgroundCache
     FmWallpaperMode wallpaper_mode;
     time_t mtime;
 };
-
-extern gboolean use_wayland;
 
 static void queue_layout_items(FmDesktop* desktop);
 static void redraw_item(FmDesktop* desktop, FmDesktopItem* item);
@@ -2138,9 +2134,6 @@ static void paint_rubber_banding_rect(FmDesktop* self, cairo_t* cr, GdkRectangle
 
 static void _free_cache_image(FmBackgroundCache *cache)
 {
-    if (!use_wayland)
-    XFreePixmap(cairo_xlib_surface_get_display(cache->bg),
-                cairo_xlib_surface_get_drawable(cache->bg));
     cairo_surface_destroy(cache->bg);
     cache->bg = NULL;
     cache->wallpaper_mode = FM_WP_COLOR; /* for cache check */
@@ -2327,18 +2320,7 @@ static void update_background(FmDesktop* desktop, int is_it)
             }
             if (!dest_w || !dest_h) return;   // no monitor info yet; give up....
         }
-        if (use_wayland)
-            cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
-        else
-        {
-        /* this code is taken from libgnome-desktop */
-        xdisplay = GDK_WINDOW_XDISPLAY(root);
-        xpixmap = XCreatePixmap(xdisplay, RootWindow(xdisplay, screen_num),
-                                dest_w, dest_h, DefaultDepth(xdisplay, screen_num));
-        cache->bg = cairo_xlib_surface_create(xdisplay, xpixmap,
-                                              GDK_VISUAL_XVISUAL(gdk_screen_get_system_visual(screen)),
-                                              dest_w, dest_h);
-        }
+        cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
         cr = cairo_create(cache->bg);
         if(gdk_pixbuf_get_has_alpha(pix)
             || desktop->conf.wallpaper_mode == FM_WP_CENTER
@@ -2398,29 +2380,6 @@ static void update_background(FmDesktop* desktop, int is_it)
     gdk_window_set_background_pattern(window, pattern);
     cairo_pattern_destroy(pattern);
 
-    if (!use_wayland)
-    {
-    /* set root map here */
-    xdisplay = GDK_WINDOW_XDISPLAY(root);
-    xroot = RootWindow(xdisplay, screen_num);
-
-    xpixmap = cairo_xlib_surface_get_drawable(cache->bg);
-
-    XChangeProperty(xdisplay, GDK_WINDOW_XID(root),
-                    XA_XROOTMAP_ID, XA_PIXMAP, 32, PropModeReplace, (guchar*)&xpixmap, 1);
-
-    XGrabServer (xdisplay);
-
-    XChangeProperty(xdisplay, xroot, XA_XROOTPMAP_ID, XA_PIXMAP, 32,
-                    PropModeReplace, (guchar*)&xpixmap, 1);
-
-    XSetWindowBackgroundPixmap(xdisplay, xroot, xpixmap);
-    XClearWindow(xdisplay, xroot);
-
-    XFlush(xdisplay);
-    XUngrabServer(xdisplay);
-
-    }
     if(pix)
         g_object_unref(pix);
 
@@ -2530,6 +2489,7 @@ static void update_working_area (FmDesktop* desktop)
 
 static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointer data)
 {
+    if (gtk_layer_is_supported ()) return GDK_FILTER_CONTINUE;
     XPropertyEvent * evt = (XPropertyEvent*) xevent;
     FmDesktop* self = (FmDesktop*)data;
     if (evt->type == PropertyNotify)
@@ -3874,7 +3834,7 @@ static void desktop_search_ensure_window(FmDesktop *desktop)
     desktop->search_window = gtk_window_new(GTK_WINDOW_POPUP);
     window = GTK_WINDOW(desktop->search_window);
 
-    if (use_wayland)
+    if (gtk_layer_is_supported ())
     {
         gtk_layer_init_for_window (window);
         gtk_layer_set_anchor (window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
@@ -4683,7 +4643,7 @@ static void fm_desktop_init(FmDesktop *self)
                                    GTK_STYLE_PROVIDER(self->css),
                                    GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-    if (use_wayland)
+    if (gtk_layer_is_supported ())
     {
         gtk_layer_init_for_window(&(self->parent));
         gtk_layer_set_layer(&(self->parent), GTK_LAYER_SHELL_LAYER_BACKGROUND);
@@ -4831,7 +4791,7 @@ static void fm_desktop_class_init(FmDesktopClass *klass)
     widget_class->drag_end = on_drag_end;
     /* widget_class->drag_data_get = on_drag_data_get; */
 
-    if (!use_wayland)
+    if (!gtk_layer_is_supported ())
     {
     if(XInternAtoms(gdk_x11_get_default_xdisplay(), atom_names,
                     G_N_ELEMENTS(atom_names), False, atoms))
@@ -5626,7 +5586,7 @@ void fm_desktop_manager_init(gint on_screen)
         {
             gint mon_init = (on_screen < 0 || on_screen == (int)scr) ? (int)mon : (mon ? -2 : -1);
             FmDesktop *desktop = fm_desktop_new(screen, mon_init);
-            if (use_wayland) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
+            if (gtk_layer_is_supported ()) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
             GtkWidget *widget = GTK_WIDGET(desktop);
             FmFolder *desktop_folder;
 
@@ -5816,7 +5776,7 @@ static gboolean update_monitors (gpointer user_data)
         {
             FmFolder *desktop_folder;
             FmDesktop *desktop = fm_desktop_new (screen, mon);
-            if (use_wayland) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
+            if (gtk_layer_is_supported ()) gtk_layer_set_monitor (&(desktop->parent), gdk_display_get_monitor (gdpy, mon));
             desktops[mon] = desktop;
             gtk_widget_realize (GTK_WIDGET (desktop));
             if (desktop->conf.folder)

@@ -42,8 +42,6 @@
 
 #define VIEW_TAB_LOC 4
 
-extern gboolean use_wayland;
-
 static void fm_main_win_destroy(GtkWidget *object);
 
 static void fm_main_win_finalize(GObject *object);
@@ -1774,7 +1772,7 @@ FmMainWin* fm_main_win_add_win(FmMainWin* win, FmPath* path)
     fm_main_win_add_tab(win, path);
     gtk_window_present(GTK_WINDOW(win));
 
-    if (use_wayland)
+    if (gtk_layer_is_supported ())
     {
         /*
          * This is a kludgy hack required because wayland does not restrict the size of a window to screen bounds
