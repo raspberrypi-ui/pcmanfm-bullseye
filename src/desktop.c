@@ -2499,7 +2499,7 @@ static GdkFilterReturn on_root_event(GdkXEvent *xevent, GdkEvent *event, gpointe
 static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
 {
     GdkRectangle geom;
-    if (desktop->monitor >= gdk_display_get_n_monitors (gdk_display_get_default ()))
+    if (desktop->monitor >= n_monitors)
     {
         gint i;
         /* our monitor was disconnected... remove FmDesktop now! */
