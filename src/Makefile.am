@@ -42,6 +42,7 @@ pcmanfm_CFLAGS = \
 	$(G_CAST_CHECKS) \
 	-Wall \
 	-Werror-implicit-function-declaration \
+	-Wno-deprecated-declarations \
 	$(NULL)
 
 pcmanfm_LDADD = \

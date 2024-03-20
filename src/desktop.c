@@ -177,29 +177,65 @@ GdkMonitor *gdk_mon_for_desktop (FmDesktop *desk)
 /* ---------------------------------------------------------------------
     Items management and common functions */
 
-static char* get_config_file(FmDesktop* desktop, gboolean create_dir, gboolean sys)
+static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
 {
-    char *dir, *path;
+    char *dir, *mname = NULL, *path = NULL;
     int i;
 
-    for(i = 0; i < n_monitors; i++)
-        if(desktops[i] == desktop)
+    for (i = 0; i < n_monitors; i++)
+        if (desktops[i] == desktop)
             break;
-    if(i >= n_monitors)
-        return NULL;
-    dir = sys ? pcmanfm_get_system_profile_dir () : pcmanfm_get_profile_dir(create_dir);
-    if (app_config->common_bg) i = 0;
+    if (i >= n_monitors) return NULL;
+    dir = sys ? pcmanfm_get_system_profile_dir () : pcmanfm_get_profile_dir (create);
+
+    // on a wayland system, look for a file with a monitor name
+    if (gtk_layer_is_supported () && sys == FALSE)
+        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (gdk_display_get_default ()), i);
+
     if (is_wizard ())
-        path = g_strdup_printf("%s/wizard-items.conf", dir);
-    else if (sys == TRUE || app_config->common_bg)
-        path = g_strdup_printf("%s/desktop-items.conf", dir);
+        // only ever use the one system file for the wizard desktop
+        path = g_strdup_printf ("%s/wizard-items.conf", dir);
+    else if (app_config->common_bg)
+        // if bg is common, always use the file for desktop 0
+        path = g_strdup_printf ("%s/desktop-items-0.conf", dir);
+    else if (create)
+    {
+        // if creating, create a file matching monitor name or number
+        if (mname)
+        {
+            path = g_strdup_printf ("%s/desktop-items-%s.conf", dir, mname);
+            g_free (mname);
+        }
+        else path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
+    }
     else
     {
-        char *mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (gdk_display_get_default ()), i);
-        path = g_strdup_printf("%s/desktop-items-%s.conf", dir, mname);
-        g_free (mname);
+        if (mname)
+        {
+            // try to find a file matching the monitor name
+            path = g_strdup_printf ("%s/desktop-items-%s.conf", dir, mname);
+            g_free (mname);
+            if (access (path, F_OK) != 0)
+            {
+                g_free (path);
+                path = NULL;
+            }
+        }
+
+        if (!path)
+        {
+            // if you don't find one, look for one which matches desktop n...
+            path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
+            while (access (path, F_OK) != 0 && i > 0)
+            {
+                // .. or the highest which exists
+                g_free (path);
+                i--;
+                path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
+            }
+        }
     }
-    g_free(dir);
+    g_free (dir);
     return path;
 }
 
@@ -2149,16 +2185,9 @@ static void update_background(FmDesktop* desktop, int is_it)
     GtkWidget* widget = (GtkWidget*)desktop;
     GdkPixbuf* pix, *scaled;
     cairo_t* cr;
-    GdkScreen *screen = gtk_widget_get_screen(widget);
-    GdkWindow* root = gdk_screen_get_root_window(screen);
     GdkWindow *window = gtk_widget_get_window(widget);
     FmBackgroundCache *cache;
     cairo_pattern_t *pattern;
-
-    Display* xdisplay;
-    Pixmap xpixmap;
-    Window xroot;
-    int screen_num = 0;
 
     char *wallpaper;
 
