@@ -185,7 +185,7 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
     for (i = 0; i < n_monitors; i++)
         if (desktops[i] == desktop)
             break;
-    if (i >= n_monitors) return NULL;
+    if (i >= n_monitors) i = 0;
     dir = sys ? pcmanfm_get_system_profile_dir () : pcmanfm_get_profile_dir (create);
 
     // on a wayland system, look for a file with a monitor name
@@ -194,7 +194,7 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
 
     if (is_wizard ())
         // only ever use the one system file for the wizard desktop
-        path = g_strdup_printf ("%s/wizard-items.conf", dir);
+        path = g_strdup_printf ("%s/wizard-items-0.conf", dir);
     else if (app_config->common_bg)
         // if bg is common, always use the file for desktop 0
         path = g_strdup_printf ("%s/desktop-items-0.conf", dir);
