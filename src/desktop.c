@@ -226,9 +226,9 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
         {
             // if you don't find one, look for one which matches desktop n...
             path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
-            while (access (path, F_OK) != 0 && i > 0)
+            while (sys && access (path, F_OK) != 0 && i > 0)
             {
-                // .. or the highest which exists
+                // .. or the highest which exists if looking for a system file
                 g_free (path);
                 i--;
                 path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
