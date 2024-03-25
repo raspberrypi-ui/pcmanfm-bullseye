@@ -397,6 +397,7 @@ static inline void load_items(FmDesktop* desktop)
             int out; /* out of bounds */
 
             item = fm_folder_model_get_item_userdata(desktop->model, &it);
+            if (!item) continue;
             name = fm_file_info_get_name(item->fi);
             if(g_key_file_has_group(kf, name))
             {
@@ -1842,6 +1843,7 @@ static void layout_items(FmDesktop* self)
             item = fm_folder_model_get_item_userdata(self->model, &it);
             icon = NULL;
             gtk_tree_model_get(model, &it, FM_FOLDER_MODEL_COL_ICON, &icon, -1);
+            if (!item) continue;
             if(item->fixed_pos)
                 calc_item_size(self, item, icon);
             else
@@ -3085,6 +3087,7 @@ static gboolean on_draw(GtkWidget* w, cairo_t* cr)
     if(model && gtk_tree_model_get_iter_first(model, &it)) do
     {
         FmDesktopItem* item = fm_folder_model_get_item_userdata(self->model, &it);
+        if (!item) continue;
         GdkRectangle* intersect, tmp, tmp2;
         GdkPixbuf* icon = NULL;
         if(gdk_rectangle_intersect(&area, &item->icon_rect, &tmp))
@@ -5548,12 +5551,26 @@ void fm_desktop_reconfigure (GtkAction *act)
             load_config (desktops[i]);
 
             FmFolder *desktop_folder;
-            disconnect_model (desktops[i]);
-            if (desktops[i]->conf.folder && desktops[i]->conf.folder[0])
-                desktop_folder = fm_folder_from_path_name (desktops[i]->conf.folder);
-            else
-                desktop_folder = fm_folder_from_path (fm_path_get_desktop ());
-            connect_model (desktops[i], desktop_folder);
+            if (desktops[i]->conf.folder)
+            {
+                if (desktops[i]->conf.folder[0])
+                    desktop_folder = fm_folder_from_path_name(desktops[i]->conf.folder);
+                else
+                    desktop_folder = NULL;
+            }
+            else desktop_folder = fm_folder_from_path(fm_path_get_desktop());
+
+            if (desktops[i]->model == NULL ||
+                fm_folder_model_get_folder(desktops[i]->model) != desktop_folder)
+            {
+                disconnect_model (desktops[i]);
+                if (desktop_folder)
+                {
+                    fm_folder_reload (desktop_folder);
+                    connect_model (desktops[i], desktop_folder);
+                }
+                else queue_layout_items (desktops[i]);
+            }
             g_object_unref (desktop_folder);
 
             reload_items (desktops[i]);
