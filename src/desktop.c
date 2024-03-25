@@ -181,17 +181,18 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
 {
     char *dir, *mname = NULL, *path = NULL;
     int i;
+    GdkDisplay *dpy = gdk_display_get_default ();
 
     for (i = 0; i < n_monitors; i++)
         if (desktops[i] == desktop)
             break;
     if (i >= n_monitors) i = 0;
+    if (i >= gdk_display_get_n_monitors (dpy)) i = 0;
     dir = sys ? pcmanfm_get_system_profile_dir () : pcmanfm_get_profile_dir (create);
 
     // on a wayland system, look for a file with a monitor name
     if (gtk_layer_is_supported () && sys == FALSE)
-        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (gdk_display_get_default ()), i);
-
+        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (dpy), i);
     if (is_wizard ())
         // only ever use the one system file for the wizard desktop
         path = g_strdup_printf ("%s/wizard-items-0.conf", dir);
@@ -2333,7 +2334,9 @@ static void update_background(FmDesktop* desktop, int is_it)
         src_h = gdk_pixbuf_get_height(pix);
         {
             GdkRectangle geom;
-            gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
+            GdkMonitor *mon = gdk_mon_for_desktop (desktop);
+            if (!mon) return;
+            gdk_monitor_get_geometry (mon, &geom);
             dest_w = geom.width;
             dest_h = geom.height;
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
@@ -3132,7 +3135,9 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 
     GtkAllocation geom;
 
-    gdk_monitor_get_geometry (gdk_mon_for_desktop (self), &geom);
+    GdkMonitor *mon = gdk_mon_for_desktop (self);
+    if (!mon) return;
+    gdk_monitor_get_geometry (mon, &geom);
     gtk_widget_set_size_request (w, geom.width, geom.height);
 
     pc = gtk_widget_get_pango_context((GtkWidget*)self);
@@ -3185,14 +3190,18 @@ static void on_size_allocate(GtkWidget* w, GtkAllocation* alloc)
 static void on_get_preferred_width(GtkWidget *w, gint *minimal_width, gint *natural_width)
 {
     GdkRectangle geom;
-    gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
+    GdkMonitor *mon = gdk_mon_for_desktop (FM_DESKTOP (w));
+    if (!mon) return;
+    gdk_monitor_get_geometry (mon, &geom);
     *minimal_width = *natural_width = geom.width;
 }
 
 static void on_get_preferred_height(GtkWidget *w, gint *minimal_height, gint *natural_height)
 {
     GdkRectangle geom;
-    gdk_monitor_get_geometry (gdk_mon_for_desktop (FM_DESKTOP (w)), &geom);
+    GdkMonitor *mon = gdk_mon_for_desktop (FM_DESKTOP (w));
+    if (!mon) return;
+    gdk_monitor_get_geometry (mon, &geom);
     *minimal_height = *natural_height = geom.height;
 }
 
