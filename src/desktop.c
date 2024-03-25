@@ -2502,8 +2502,10 @@ static void on_rows_reordered(FmFolderModel* model, GtkTreePath* parent_tp, GtkT
 static void update_working_area (FmDesktop* desktop)
 {
     GdkRectangle geom;
-    gdk_monitor_get_workarea (gdk_mon_for_desktop (desktop), &desktop->working_area);
-    gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
+    GdkMonitor *mon = gdk_mon_for_desktop (desktop);
+    if (!mon) return;
+    gdk_monitor_get_workarea (mon, &desktop->working_area);
+    gdk_monitor_get_geometry (mon, &geom);
     desktop->working_area.x -= geom.x;
     desktop->working_area.y -= geom.y;
     queue_layout_items(desktop);
@@ -2542,7 +2544,9 @@ static void on_screen_size_changed(GdkScreen* screen, FmDesktop* desktop)
         gtk_widget_destroy(GTK_WIDGET(desktop));
         return;
     }
-    gdk_monitor_get_geometry (gdk_mon_for_desktop (desktop), &geom);
+    GdkMonitor *mon = gdk_mon_for_desktop (desktop);
+    if (!mon) return;
+    gdk_monitor_get_geometry (mon, &geom);
     gtk_window_resize((GtkWindow*)desktop, geom.width, geom.height);
     /* bug #3614780: if monitor was moved desktop should be moved too */
     gtk_window_move((GtkWindow*)desktop, geom.x, geom.y);
