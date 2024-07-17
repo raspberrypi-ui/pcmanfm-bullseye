@@ -2388,29 +2388,20 @@ static void update_background(FmDesktop* desktop, int is_it)
                     g_object_unref(pix);
                     pix = scaled;
                 }
-                x = (dest_w - src_w)/2;
-                y = (dest_h - src_h)/2;
-
-                col = ((int)(desktop->conf.desktop_bg.alpha * 255));
-                col += ((int)(desktop->conf.desktop_bg.blue * 255)) << 8;
-                col += ((int)(desktop->conf.desktop_bg.green * 255)) << 16;
-                col += ((int)(desktop->conf.desktop_bg.red * 255)) << 24;
-                cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, dest_w, dest_h);
-                gdk_pixbuf_fill (cropped, col);
-                if (desktop->conf.wallpaper_mode == FM_WP_CROP)
-                    gdk_pixbuf_copy_area (pix, (src_w - dest_w) / 2, (src_h - dest_h) / 2, dest_w, dest_h, cropped, 0, 0);
-                else
-                    gdk_pixbuf_copy_area (pix, 0, 0, src_w, src_h, cropped, x, y);
-
-                g_object_unref (pix);
-                pix = cropped;
-                x = 0;
-                y = 0;
             }
-            break;
         case FM_WP_CENTER:
-            x = (dest_w - src_w)/2;
-            y = (dest_h - src_h)/2;
+            col = ((int)(desktop->conf.desktop_bg.alpha * 255));
+            col += ((int)(desktop->conf.desktop_bg.blue * 255)) << 8;
+            col += ((int)(desktop->conf.desktop_bg.green * 255)) << 16;
+            col += ((int)(desktop->conf.desktop_bg.red * 255)) << 24;
+            cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, dest_w, dest_h);
+            gdk_pixbuf_fill (cropped, col);
+            if (desktop->conf.wallpaper_mode == FM_WP_CROP)
+                gdk_pixbuf_copy_area (pix, (src_w - dest_w) / 2, (src_h - dest_h) / 2, dest_w, dest_h, cropped, 0, 0);
+            else
+                gdk_pixbuf_copy_area (pix, 0, 0, src_w, src_h, cropped, (dest_w - src_w) / 2, (dest_h - src_h) / 2);
+            g_object_unref (pix);
+            pix = cropped;
             break;
         case FM_WP_COLOR: ; /* handled above */
         }
