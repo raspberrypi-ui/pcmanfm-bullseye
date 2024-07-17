@@ -2359,80 +2359,80 @@ static void update_background(FmDesktop* desktop, int is_it)
             cairo_fill(cr);
         }
 
-        col = ((int)(desktop->conf.desktop_bg.alpha * 255));
+        col = (int)(desktop->conf.desktop_bg.alpha * 255);
         col += ((int)(desktop->conf.desktop_bg.blue * 255)) << 8;
         col += ((int)(desktop->conf.desktop_bg.green * 255)) << 16;
         col += ((int)(desktop->conf.desktop_bg.red * 255)) << 24;
 
-        switch(desktop->conf.wallpaper_mode)
+        if (dest_w != src_w || dest_h != src_h)
         {
-        case FM_WP_TILE:
-            cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
-            gdk_pixbuf_fill (cropped, col);
-
-            dest_y = 0;
-            while (dest_y < dest_h)
+            switch (desktop->conf.wallpaper_mode)
             {
-                dest_x = 0;
-                while (dest_x < dest_w)
-                {
-                    if (dest_x + src_w <= dest_w) width = src_w;
-                    else width = dest_w - dest_x;
-                    if (dest_y + src_h <= dest_h) height = src_h;
-                    else height = dest_h - dest_y;
-                    gdk_pixbuf_copy_area (pix, 0, 0, width, height, cropped, dest_x, dest_y);
-                    dest_x += src_w;
-                }
-                dest_y += src_h;
-            }
-
-            g_object_unref (pix);
-            pix = cropped;
-            break;
-        case FM_WP_STRETCH:
-        case FM_WP_SCREEN:
-            if(dest_w == src_w && dest_h == src_h)
-                scaled = (GdkPixbuf*)g_object_ref(pix);
-            else
-                scaled = gdk_pixbuf_scale_simple(pix, dest_w, dest_h, GDK_INTERP_BILINEAR);
-            g_object_unref(pix);
-            pix = scaled;
-            break;
-        case FM_WP_FIT:
-        case FM_WP_CROP:
-            if(dest_w != src_w || dest_h != src_h)
-            {
-                gdouble w_ratio = (float)dest_w / src_w;
-                gdouble h_ratio = (float)dest_h / src_h;
-                gdouble ratio = (desktop->conf.wallpaper_mode == FM_WP_FIT)
-                    ? MIN(w_ratio, h_ratio)
-                    : MAX(w_ratio, h_ratio);
-                if(ratio != 1.0)
-                {
-                    src_w *= ratio;
-                    src_h *= ratio;
-                    scaled = gdk_pixbuf_scale_simple(pix, src_w, src_h, GDK_INTERP_BILINEAR);
-                    g_object_unref(pix);
+                case FM_WP_STRETCH:
+                case FM_WP_SCREEN:
+                    // simple scaling to new size
+                    scaled = gdk_pixbuf_scale_simple (pix, dest_w, dest_h, GDK_INTERP_BILINEAR);
+                    g_object_unref (pix);
                     pix = scaled;
-                }
+                    break;
+
+                case FM_WP_FIT:
+                case FM_WP_CROP:
+                    // create a consistent x-y scaling to fit either the shortest or the longest side to the screen
+                    gdouble w_ratio = (float) dest_w / src_w;
+                    gdouble h_ratio = (float) dest_h / src_h;
+                    gdouble ratio = desktop->conf.wallpaper_mode == FM_WP_FIT ? MIN (w_ratio, h_ratio) : MAX (w_ratio, h_ratio);
+                    if (ratio != 1.0)
+                    {
+                        src_w *= ratio;
+                        src_h *= ratio;
+                        scaled = gdk_pixbuf_scale_simple (pix, src_w, src_h, GDK_INTERP_BILINEAR);
+                        g_object_unref (pix);
+                        pix = scaled;
+                    }
+                    // fallthrough
+                case FM_WP_CENTER:
+                    // create a new pixbuf filled with background
+                    cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
+                    gdk_pixbuf_fill (cropped, col);
+                    
+                    // calculate how to centre the scaled pixbuf, discarding edges if needed
+                    src_x = src_w > dest_w ? (src_w - dest_w) / 2 : 0;
+                    src_y = src_h > dest_h ? (src_h - dest_h) / 2 : 0;
+                    width = MIN (src_w, dest_w);
+                    height = MIN (src_h, dest_h);
+                    dest_x = dest_w > src_w ? (dest_w - src_w) / 2 : 0;
+                    dest_y = dest_h > src_h ? (dest_h - src_h) / 2 : 0;
+                    gdk_pixbuf_copy_area (pix, src_x, src_y, width, height, cropped, dest_x, dest_y);
+
+                    g_object_unref (pix);
+                    pix = cropped;
+                    break;
+
+                case FM_WP_TILE:
+                    // create a new pixbuf filled with background
+                    cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
+                    gdk_pixbuf_fill (cropped, col);
+
+                    // loop x and y, copying the source repeatedly into the destination pixbuf
+                    dest_y = 0;
+                    while (dest_y < dest_h)
+                    {
+                        dest_x = 0;
+                        while (dest_x < dest_w)
+                        {
+                            width = dest_x + src_w > dest_w ? dest_w - dest_x : src_w;
+                            height = dest_y + src_h > dest_h ? dest_h - dest_y : src_h;
+                            gdk_pixbuf_copy_area (pix, 0, 0, width, height, cropped, dest_x, dest_y);
+                            dest_x += src_w;
+                        }
+                        dest_y += src_h;
+                    }
+
+                    g_object_unref (pix);
+                    pix = cropped;
+                    break;
             }
-        case FM_WP_CENTER:
-            cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
-            gdk_pixbuf_fill (cropped, col);
-
-            src_x = src_w > dest_w ? (src_w - dest_w) / 2 : 0;
-            src_y = src_h > dest_h ? (src_h - dest_h) / 2 : 0;
-            width = src_w > dest_w ? dest_w : src_w;
-            height = src_h > dest_h ? dest_h : src_h;
-            dest_x = dest_w > src_w ? (dest_w - src_w) / 2 : 0;
-            dest_y = dest_h > src_h ? (dest_h - src_h) / 2 : 0;
-
-            gdk_pixbuf_copy_area (pix, src_x, src_y, width, height, cropped, dest_x, dest_y);
-
-            g_object_unref (pix);
-            pix = cropped;
-            break;
-        case FM_WP_COLOR: ; /* handled above */
         }
         gdk_cairo_set_source_pixbuf(cr, pix, x, y);
         cairo_paint(cr);
