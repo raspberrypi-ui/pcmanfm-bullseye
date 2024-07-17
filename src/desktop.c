@@ -2191,6 +2191,7 @@ static void update_background(FmDesktop* desktop, int is_it)
     GdkWindow *window = gtk_widget_get_window(widget);
     FmBackgroundCache *cache;
     cairo_pattern_t *pattern;
+    int src_x, src_y, width, height, dest_x, dest_y;
 
     char *wallpaper;
 
@@ -2358,9 +2359,35 @@ static void update_background(FmDesktop* desktop, int is_it)
             cairo_fill(cr);
         }
 
+        col = ((int)(desktop->conf.desktop_bg.alpha * 255));
+        col += ((int)(desktop->conf.desktop_bg.blue * 255)) << 8;
+        col += ((int)(desktop->conf.desktop_bg.green * 255)) << 16;
+        col += ((int)(desktop->conf.desktop_bg.red * 255)) << 24;
+
         switch(desktop->conf.wallpaper_mode)
         {
         case FM_WP_TILE:
+            cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
+            gdk_pixbuf_fill (cropped, col);
+
+            dest_y = 0;
+            while (dest_y < dest_h)
+            {
+                dest_x = 0;
+                while (dest_x < dest_w)
+                {
+                    if (dest_x + src_w <= dest_w) width = src_w;
+                    else width = dest_w - dest_x;
+                    if (dest_y + src_h <= dest_h) height = src_h;
+                    else height = dest_h - dest_y;
+                    gdk_pixbuf_copy_area (pix, 0, 0, width, height, cropped, dest_x, dest_y);
+                    dest_x += src_w;
+                }
+                dest_y += src_h;
+            }
+
+            g_object_unref (pix);
+            pix = cropped;
             break;
         case FM_WP_STRETCH:
         case FM_WP_SCREEN:
@@ -2391,19 +2418,14 @@ static void update_background(FmDesktop* desktop, int is_it)
             }
         case FM_WP_CENTER:
             cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
-
-            col = ((int)(desktop->conf.desktop_bg.alpha * 255));
-            col += ((int)(desktop->conf.desktop_bg.blue * 255)) << 8;
-            col += ((int)(desktop->conf.desktop_bg.green * 255)) << 16;
-            col += ((int)(desktop->conf.desktop_bg.red * 255)) << 24;
             gdk_pixbuf_fill (cropped, col);
 
-            int src_x = src_w > dest_w ? (src_w - dest_w) / 2 : 0;
-            int src_y = src_h > dest_h ? (src_h - dest_h) / 2 : 0;
-            int width = src_w > dest_w ? dest_w : src_w;
-            int height = src_h > dest_h ? dest_h : src_h;
-            int dest_x = dest_w > src_w ? (dest_w - src_w) / 2 : 0;
-            int dest_y = dest_h > src_h ? (dest_h - src_h) / 2 : 0;
+            src_x = src_w > dest_w ? (src_w - dest_w) / 2 : 0;
+            src_y = src_h > dest_h ? (src_h - dest_h) / 2 : 0;
+            width = src_w > dest_w ? dest_w : src_w;
+            height = src_h > dest_h ? dest_h : src_h;
+            dest_x = dest_w > src_w ? (dest_w - src_w) / 2 : 0;
+            dest_y = dest_h > src_h ? (dest_h - src_h) / 2 : 0;
 
             gdk_pixbuf_copy_area (pix, src_x, src_y, width, height, cropped, dest_x, dest_y);
 
@@ -2413,8 +2435,6 @@ static void update_background(FmDesktop* desktop, int is_it)
         case FM_WP_COLOR: ; /* handled above */
         }
         gdk_cairo_set_source_pixbuf(cr, pix, x, y);
-        if (desktop->conf.wallpaper_mode == FM_WP_TILE)
-            cairo_pattern_set_extend (cairo_get_source (cr), CAIRO_EXTEND_REPEAT);
         cairo_paint(cr);
         cairo_destroy(cr);
         cache->wallpaper_mode = desktop->conf.wallpaper_mode;
