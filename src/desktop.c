@@ -2395,7 +2395,7 @@ static void update_background(FmDesktop* desktop, int is_it)
                     // create a new pixbuf filled with background
                     cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha (pix), 8, dest_w, dest_h);
                     gdk_pixbuf_fill (cropped, col);
-                    
+
                     // calculate how to centre the scaled pixbuf, discarding edges if needed
                     src_x = src_w > dest_w ? (src_w - dest_w) / 2 : 0;
                     src_y = src_h > dest_h ? (src_h - dest_h) / 2 : 0;
