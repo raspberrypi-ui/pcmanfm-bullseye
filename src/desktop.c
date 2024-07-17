@@ -2186,7 +2186,7 @@ static void _clear_bg_cache(FmDesktop *self)
 static void update_background(FmDesktop* desktop, int is_it)
 {
     GtkWidget* widget = (GtkWidget*)desktop;
-    GdkPixbuf* pix, *scaled;
+    GdkPixbuf* pix, *scaled, *cropped;
     cairo_t* cr;
     GdkWindow *window = gtk_widget_get_window(widget);
     FmBackgroundCache *cache;
@@ -2387,8 +2387,19 @@ static void update_background(FmDesktop* desktop, int is_it)
                     g_object_unref(pix);
                     pix = scaled;
                 }
+                x = (dest_w - src_w)/2;
+                y = (dest_h - src_h)/2;
+                if (desktop->conf.wallpaper_mode == FM_WP_CROP)
+                {
+                    cropped = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, dest_w, dest_h);
+                    gdk_pixbuf_copy_area (pix, (src_w - dest_w) / 2, (src_h - dest_h) / 2, dest_w, dest_h, cropped, 0, 0);
+                    g_object_unref (pix);
+                    pix = cropped;
+                    x = 0;
+                    y = 0;
+                }
             }
-            /* continue to execute code in case FM_WP_CENTER */
+            break;
         case FM_WP_CENTER:
             x = (dest_w - src_w)/2;
             y = (dest_h - src_h)/2;
