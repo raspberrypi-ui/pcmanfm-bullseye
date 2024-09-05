@@ -4605,12 +4605,15 @@ static inline void disconnect_model(FmDesktop* desktop)
     g_signal_handlers_disconnect_by_func(folder, on_folder_finish_loading, desktop);
     g_signal_handlers_disconnect_by_func(folder, on_folder_error, desktop);
     g_signal_handlers_disconnect_by_func(app_config, on_big_icon_size_changed, desktop->model);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_row_deleting, desktop);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_row_inserted, desktop);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_row_deleted, desktop);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_row_changed, desktop);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_rows_reordered, desktop);
-    g_signal_handlers_disconnect_by_func(desktop->model, on_sort_changed, desktop);
+    if (desktop->model)
+    {
+        g_signal_handlers_disconnect_by_func(desktop->model, on_row_deleting, desktop);
+        g_signal_handlers_disconnect_by_func(desktop->model, on_row_inserted, desktop);
+        g_signal_handlers_disconnect_by_func(desktop->model, on_row_deleted, desktop);
+        g_signal_handlers_disconnect_by_func(desktop->model, on_row_changed, desktop);
+        g_signal_handlers_disconnect_by_func(desktop->model, on_rows_reordered, desktop);
+        g_signal_handlers_disconnect_by_func(desktop->model, on_sort_changed, desktop);
+    }
     g_object_unref(desktop->model);
     desktop->model = NULL;
     fm_desktop_accessible_model_removed(desktop);
@@ -5831,6 +5834,8 @@ static gboolean update_monitors (gpointer user_data)
     // tear down existing desktops
     for (mon = 0; mon < n_monitors; mon++)
     {
+        g_object_unref (desktops[mon]->model);
+        desktops[mon]->model = NULL;
         gtk_widget_destroy (GTK_WIDGET (desktops[mon]));
     }
     g_free (desktops);
