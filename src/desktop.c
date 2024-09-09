@@ -2337,7 +2337,11 @@ static void update_background(FmDesktop* desktop, int is_it)
         {
             GdkRectangle geom;
             GdkMonitor *mon = gdk_mon_for_desktop (desktop);
-            if (!mon) return;
+            if (!mon)
+            {
+                if (pix) g_object_unref(pix);
+                return;
+            }
             gdk_monitor_get_geometry (mon, &geom);
             dest_w = geom.width;
             dest_h = geom.height;
@@ -2346,7 +2350,11 @@ static void update_background(FmDesktop* desktop, int is_it)
                 x = -geom.x;
                 y = -geom.y;
             }
-            if (!dest_w || !dest_h) return;   // no monitor info yet; give up....
+            if (!dest_w || !dest_h)
+            {
+                if (pix) g_object_unref(pix);
+                return;   // no monitor info yet; give up....
+            }
         }
         cache->bg = cairo_image_surface_create (CAIRO_FORMAT_RGB24, dest_w, dest_h);
         cr = cairo_create(cache->bg);
@@ -5836,6 +5844,7 @@ static gboolean update_monitors (gpointer user_data)
     {
         g_object_unref (desktops[mon]->model);
         desktops[mon]->model = NULL;
+        _clear_bg_cache (desktops[mon]);
         gtk_widget_destroy (GTK_WIDGET (desktops[mon]));
     }
     g_free (desktops);
