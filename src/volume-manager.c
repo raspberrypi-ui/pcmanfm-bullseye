@@ -32,6 +32,8 @@
 #include "main-win.h"
 #include "app-config.h"
 
+extern gboolean is_wizard (void);
+
 static GVolumeMonitor* vol_mon = NULL;
 
 static guint on_idle_handler = 0;
@@ -355,7 +357,7 @@ static gboolean on_vol_added_timeout(gpointer vol)
 
 static void on_vol_added(GVolumeMonitor* vm, GVolume* vol, gpointer user_data)
 {
-    if(app_config->mount_removable)
+    if(app_config->mount_removable && !is_wizard ())
         /* bug #3615195: GLib reports unrelated volume after mount sometimes
            if it's mounted before reported so let delay it a tiny bit */
         gdk_threads_add_timeout(100, on_vol_added_timeout, g_object_ref(vol));
