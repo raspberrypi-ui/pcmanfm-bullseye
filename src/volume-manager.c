@@ -394,7 +394,7 @@ static gboolean fm_volume_manager_delay_init(gpointer user_data)
     g_signal_connect(vol_mon, "volume-changed", G_CALLBACK(on_vol_changed), NULL);
 #endif
 
-    if(app_config->mount_on_startup)
+    if(app_config->mount_on_startup && !is_wizard ())
     {
         /* try to automount all volumes */
         vols = g_volume_monitor_get_volumes(vol_mon);
