@@ -2392,8 +2392,8 @@ static void update_background(FmDesktop* desktop, int is_it)
                     gdouble ratio = desktop->conf.wallpaper_mode == FM_WP_FIT ? MIN (w_ratio, h_ratio) : MAX (w_ratio, h_ratio);
                     if (ratio != 1.0)
                     {
-                        src_w *= ratio;
-                        src_h *= ratio;
+                        src_w = ratio == w_ratio ? dest_w : src_w * ratio;
+                        src_h = ratio == h_ratio ? dest_h : src_h * ratio;
                         scaled = gdk_pixbuf_scale_simple (pix, src_w, src_h, GDK_INTERP_BILINEAR);
                         g_object_unref (pix);
                         pix = scaled;
