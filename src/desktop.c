@@ -5842,6 +5842,17 @@ static gboolean update_monitors (gpointer user_data)
     // tear down existing desktops
     for (mon = 0; mon < n_monitors; mon++)
     {
+        // delete existing desktop items
+        if (documents && documents->fi) fm_folder_model_extra_file_remove (desktops[mon]->model, documents->fi);
+        if (trash_can && trash_can->fi) fm_folder_model_extra_file_remove (desktops[mon]->model, trash_can->fi);
+
+        GSList *msl;
+        for (msl = mounts; msl; msl = msl->next)
+        {
+            FmDesktopExtraItem *mount = msl->data;
+            if (mount->fi) fm_folder_model_extra_file_remove (desktops[mon]->model, mount->fi);
+        }
+
         g_object_unref (desktops[mon]->model);
         desktops[mon]->model = NULL;
         _clear_bg_cache (desktops[mon]);
