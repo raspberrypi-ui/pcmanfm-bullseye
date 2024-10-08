@@ -72,6 +72,10 @@ struct _FmBackgroundCache
     time_t mtime;
 };
 
+// for gestures
+static int gx, gy;
+static gboolean longpress = FALSE;
+
 static void queue_layout_items(FmDesktop* desktop);
 static void redraw_item(FmDesktop* desktop, FmDesktopItem* item);
 
@@ -4679,6 +4683,7 @@ static void fm_desktop_destroy(GtkWidget *object)
         g_signal_handlers_disconnect_by_func(self->dnd_src, on_dnd_src_data_get, self);
         g_object_unref(self->dnd_src);
         g_object_unref(self->dnd_dest);
+        g_object_unref(self->gesture);
     }
 
     if (self->conf.configured)
@@ -4720,6 +4725,40 @@ static void fm_desktop_destroy(GtkWidget *object)
 
     GTK_WIDGET_CLASS(fm_desktop_parent_class)->destroy(object);
 }
+
+static void on_desktop_gesture_pressed (GtkGestureLongPress *, gdouble x, gdouble y, FmDesktop *self)
+{
+    if (is_wizard ()) return;
+
+    if (ren_timer)
+    {
+        g_source_remove (ren_timer);
+        ren_timer = 0;
+    }
+    pending_rename = 0;
+    longpress = TRUE;
+    gx = x;
+    gy = y;
+}
+
+static void on_desktop_gesture_end (GtkGestureLongPress *, GdkEventSequence *, FmDesktop *self)
+{
+    FmDesktopItem *clicked_item = NULL;
+    GtkTreePath* tp = NULL;
+    GtkTreeIter it;
+    gboolean in_text;
+
+    if (longpress)
+    {
+        clicked_item = hit_test(self, &it, gx, gy, &in_text);
+        if (self->model && clicked_item)
+            tp = gtk_tree_model_get_path (GTK_TREE_MODEL(self->model), &it);
+        fm_folder_view_item_clicked_at (FM_FOLDER_VIEW(self), tp, FM_FV_CONTEXT_MENU, 0, gx, gy);
+        if(tp) gtk_tree_path_free(tp);
+    }
+    longpress = FALSE;
+}
+
 
 static void fm_desktop_init(FmDesktop *self)
 {
@@ -4804,6 +4843,12 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     fm_dnd_dest_add_targets((GtkWidget*)self, dnd_targets, G_N_ELEMENTS(dnd_targets));
 
     gtk_window_group_add_window(win_group, GTK_WINDOW(self));
+
+    self->gesture = gtk_gesture_long_press_new (GTK_WIDGET (self));
+    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (self->gesture), FALSE);
+    g_signal_connect (self->gesture, "pressed", G_CALLBACK (on_desktop_gesture_pressed), self);
+    g_signal_connect (self->gesture, "end", G_CALLBACK (on_desktop_gesture_end), self);
+    gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (self->gesture), GTK_PHASE_TARGET);
 
     return object;
 }

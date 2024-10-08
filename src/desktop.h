@@ -93,6 +93,7 @@ struct _FmDesktop
     guint search_timeout_id;
     /* desktop settings for this monitor */
     FmDesktopConfig conf;
+    GtkGesture *gesture;
 };
 
 struct _FmDesktopClass
