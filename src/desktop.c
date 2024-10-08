@@ -1046,7 +1046,7 @@ static gboolean fm_desktop_item_accessible_idle_do_action(gpointer data)
         if (tp)
         {
             fm_folder_view_item_clicked(FM_FOLDER_VIEW(item->widget), tp,
-                                        item->action_type == 0 ? FM_FV_ACTIVATED : FM_FV_CONTEXT_MENU, 0);
+                                        item->action_type == 0 ? FM_FV_ACTIVATED : FM_FV_CONTEXT_MENU, 0, -1, -1);
             gtk_tree_path_free(tp);
         }
     }
@@ -1478,7 +1478,7 @@ static gboolean fm_desktop_accessible_idle_do_action(gpointer data)
     priv->action_idle_handler = 0;
     widget = gtk_accessible_get_widget(GTK_ACCESSIBLE(data));
     if (widget)
-        fm_folder_view_item_clicked(FM_FOLDER_VIEW(widget), NULL, FM_FV_CONTEXT_MENU, 0);
+        fm_folder_view_item_clicked(FM_FOLDER_VIEW(widget), NULL, FM_FV_CONTEXT_MENU, 0, -1, -1);
     return FALSE;
 }
 
@@ -3401,7 +3401,7 @@ static gboolean on_button_press(GtkWidget* w, GdkEventButton* evt)
 
         if(self->model && clicked_item)
             tp = gtk_tree_model_get_path(GTK_TREE_MODEL(self->model), &it);
-        fm_folder_view_item_clicked(FM_FOLDER_VIEW(self), tp, clicked, 0);
+        fm_folder_view_item_clicked(FM_FOLDER_VIEW(self), tp, clicked, 0, -1, -1);
         if(tp)
             gtk_tree_path_free(tp);
         /* SF bug #929: after click the tooltip is still set to the item name */
@@ -3823,7 +3823,7 @@ static void desktop_search_activate(GtkEntry *entry, FmDesktop *desktop)
             if(get_focused_item(desktop->focus, model, &it))
             {
                 tp = gtk_tree_model_get_path(model, &it);
-                fm_folder_view_item_clicked(FM_FOLDER_VIEW(desktop), tp, FM_FV_ACTIVATED, 0);
+                fm_folder_view_item_clicked(FM_FOLDER_VIEW(desktop), tp, FM_FV_ACTIVATED, 0, -1, -1);
                 if(tp)
                     gtk_tree_path_free(tp);
             }
@@ -4113,7 +4113,7 @@ static gboolean on_key_press(GtkWidget* w, GdkEventKey* evt)
             if(get_focused_item(desktop->focus, model, &it))
             {
                 tp = gtk_tree_model_get_path(model, &it);
-                fm_folder_view_item_clicked(FM_FOLDER_VIEW(desktop), tp, FM_FV_ACTIVATED, 0);
+                fm_folder_view_item_clicked(FM_FOLDER_VIEW(desktop), tp, FM_FV_ACTIVATED, 0, -1, -1);
                 if(tp)
                     gtk_tree_path_free(tp);
             }
@@ -4753,7 +4753,7 @@ static void on_desktop_gesture_end (GtkGestureLongPress *, GdkEventSequence *, F
         clicked_item = hit_test(self, &it, gx, gy, &in_text);
         if (self->model && clicked_item)
             tp = gtk_tree_model_get_path (GTK_TREE_MODEL(self->model), &it);
-        fm_folder_view_item_clicked_at (FM_FOLDER_VIEW(self), tp, FM_FV_CONTEXT_MENU, 0, gx, gy);
+        fm_folder_view_item_clicked (FM_FOLDER_VIEW(self), tp, FM_FV_CONTEXT_MENU, 0, gx, gy);
         if(tp) gtk_tree_path_free(tp);
     }
     longpress = FALSE;
@@ -4845,7 +4845,7 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     gtk_window_group_add_window(win_group, GTK_WINDOW(self));
 
     self->gesture = gtk_gesture_long_press_new (GTK_WIDGET (self));
-    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (self->gesture), FALSE);
+    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (self->gesture), TRUE);
     g_signal_connect (self->gesture, "pressed", G_CALLBACK (on_desktop_gesture_pressed), self);
     g_signal_connect (self->gesture, "end", G_CALLBACK (on_desktop_gesture_end), self);
     gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (self->gesture), GTK_PHASE_TARGET);
