@@ -4845,7 +4845,7 @@ static GObject* fm_desktop_constructor(GType type, guint n_construct_properties,
     gtk_window_group_add_window(win_group, GTK_WINDOW(self));
 
     self->gesture = gtk_gesture_long_press_new (GTK_WIDGET (self));
-    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (self->gesture), TRUE);
+    gtk_gesture_single_set_touch_only (GTK_GESTURE_SINGLE (self->gesture), fm_config->gestures_touch_only);
     g_signal_connect (self->gesture, "pressed", G_CALLBACK (on_desktop_gesture_pressed), self);
     g_signal_connect (self->gesture, "end", G_CALLBACK (on_desktop_gesture_end), self);
     gtk_event_controller_set_propagation_phase (GTK_EVENT_CONTROLLER (self->gesture), GTK_PHASE_TARGET);
