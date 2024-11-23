@@ -2187,6 +2187,57 @@ static void _clear_bg_cache(FmDesktop *self)
     }
 }
 
+static int get_panel_offset (FmDesktop *desktop)
+{
+    char *user_config_file, *mname = NULL, *pmon = NULL;
+    int i, isize;
+    GKeyFile *kf;
+
+    // X does it right anyway...
+    if (!gtk_layer_is_supported ()) return 0;
+
+    // if there's only one monitor, it doesn't matter...
+    if (n_monitors < 2) return 0;
+
+    // find which monitor and panel size is being used
+    user_config_file = g_build_filename (g_get_user_config_dir (), "wf-panel-pi.ini", NULL);
+    kf = g_key_file_new ();
+    g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_NONE, NULL);
+    g_free (user_config_file);
+
+    pmon = g_key_file_get_string (kf, "panel", "monitor", NULL);
+    isize = g_key_file_get_integer (kf, "panel", "icon_size", NULL);
+    if (isize <= 0) isize = 32;
+
+    g_key_file_free (kf);
+
+    // find the monitor for this desktop
+    if (!pmon)
+    {
+        // monitor not set in config file - assume mon 0
+        if (desktops[0] == desktop) isize += 4;
+        else isize = 0;
+    }
+    else
+    {
+        GdkDisplay *dpy = gdk_display_get_default ();
+
+        for (i = 0; i < n_monitors; i++)
+            if (desktops[i] == desktop)
+                break;
+        if (i >= n_monitors) i = 0;
+        if (i >= gdk_display_get_n_monitors (dpy)) i = 0;
+
+        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (dpy), i);
+        if (!g_strcmp0 (mname, pmon)) isize += 4;
+        else isize = 0;
+
+        g_free (mname);
+        g_free (pmon);
+    }
+    return isize;
+}
+
 static void update_background(FmDesktop* desktop, int is_it)
 {
     GtkWidget* widget = (GtkWidget*)desktop;
@@ -2348,7 +2399,7 @@ static void update_background(FmDesktop* desktop, int is_it)
             }
             gdk_monitor_get_geometry (mon, &geom);
             dest_w = geom.width;
-            dest_h = geom.height;
+            dest_h = geom.height - get_panel_offset (desktop);
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
             {
                 x = -geom.x;
