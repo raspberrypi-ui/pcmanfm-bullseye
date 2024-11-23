@@ -206,11 +206,7 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
     else if (create)
     {
         // if creating, create a file matching monitor name or number
-        if (mname)
-        {
-            path = g_strdup_printf ("%s/desktop-items-%s.conf", dir, mname);
-            g_free (mname);
-        }
+        if (mname) path = g_strdup_printf ("%s/desktop-items-%s.conf", dir, mname);
         else path = g_strdup_printf ("%s/desktop-items-%u.conf", dir, i);
     }
     else
@@ -219,7 +215,6 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
         {
             // try to find a file matching the monitor name
             path = g_strdup_printf ("%s/desktop-items-%s.conf", dir, mname);
-            g_free (mname);
             if (access (path, F_OK) != 0)
             {
                 g_free (path);
@@ -240,6 +235,7 @@ static char *get_config_file (FmDesktop *desktop, gboolean create, gboolean sys)
             }
         }
     }
+    if (mname) g_free (mname);
     g_free (dir);
     return path;
 }
