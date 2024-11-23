@@ -2207,24 +2207,19 @@ static int get_panel_offset (FmDesktop *desktop)
 
     g_key_file_free (kf);
 
-    // find the monitor for this desktop
     if (!pmon)
     {
-        // monitor not set in config file - assume mon 0
-        if (desktops[0] == desktop) isize += 4;
+        // monitor not set in panel config file - panel will be on mon 0
+        if (desktop->monitor == 0) isize += 4;
         else isize = 0;
     }
     else
     {
-        GdkDisplay *dpy = gdk_display_get_default ();
+        // find the monitor name for this desktop
+        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (gdk_display_get_default ()),
+            desktop->monitor);
 
-        for (i = 0; i < n_monitors; i++)
-            if (desktops[i] == desktop)
-                break;
-        if (i >= n_monitors) i = 0;
-        if (i >= gdk_display_get_n_monitors (dpy)) i = 0;
-
-        mname = gdk_screen_get_monitor_plug_name (gdk_display_get_default_screen (dpy), i);
+        // compare against the monitor name set in the panel config
         if (!g_strcmp0 (mname, pmon)) isize += 4;
         else isize = 0;
 
