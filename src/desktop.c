@@ -2361,8 +2361,18 @@ static void update_background(FmDesktop* desktop, int is_it)
     else
         cache = NULL;
 
+    GdkRectangle geom;
+    GdkMonitor *mon = gdk_mon_for_desktop (desktop);
+    if (!mon)
+    {
+        if (pix) g_object_unref(pix);
+        return;
+    }
+    gdk_monitor_get_geometry (mon, &geom);
+
     if(!cache) /* solid color only */
     {
+        gdk_window_resize (window, geom.width, geom.height - get_panel_offset (desktop));
         pattern = cairo_pattern_create_rgb(desktop->conf.desktop_bg.red,
                                            desktop->conf.desktop_bg.green,
                                            desktop->conf.desktop_bg.blue);
@@ -2381,14 +2391,6 @@ static void update_background(FmDesktop* desktop, int is_it)
         src_w = gdk_pixbuf_get_width(pix);
         src_h = gdk_pixbuf_get_height(pix);
         {
-            GdkRectangle geom;
-            GdkMonitor *mon = gdk_mon_for_desktop (desktop);
-            if (!mon)
-            {
-                if (pix) g_object_unref(pix);
-                return;
-            }
-            gdk_monitor_get_geometry (mon, &geom);
             dest_w = geom.width;
             dest_h = geom.height - get_panel_offset (desktop);
             if (desktop->conf.wallpaper_mode == FM_WP_SCREEN)
